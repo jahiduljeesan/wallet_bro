@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../providers/dashboard_provider.dart';
 
 import '../../../transactions/presentation/pages/add_transaction_sheet.dart';
 
 class DashboardPage extends StatelessWidget {
-  const DashboardPage({Key? key}) : super(key: key);
+  const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,10 +18,7 @@ class DashboardPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Dashboard'), elevation: 0),
       body: CustomScrollView(
         slivers: [
           // Balance Card
@@ -32,49 +32,62 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
           ),
-          
-          // Charts Section Placeholder (will need real data)
+
+          // Spending Charts Section
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 200,
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Spending Trends', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 12),
-                              Expanded(
-                                child: LineChartWidget(), // Placeholder for line chart
-                              ),
-                            ],
-                          ),
+                  // Bar Chart: Weekly Spending
+                  SpendingBarChart(data: provider.getWeeklySpendingData()),
+                  const SizedBox(height: 16),
+                  
+                  // Row for Pie Chart and Insights
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Pie Chart: Category Breakdown
+                      Expanded(
+                        flex: 3,
+                        child: CategoryPieChart(data: provider.getCategoryData()),
+                      ),
+                      const SizedBox(width: 16),
+                      
+                      // Quick Insight Card
+                      Expanded(
+                        flex: 2,
+                        child: InsightCard(
+                          title: 'Top Category',
+                          value: provider.topCategory,
+                          subtitle: 'Most spent this month',
+                          icon: Icons.stars_rounded,
+                          color: Colors.orangeAccent,
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
-              ),
+              ).animate().fadeIn(duration: 800.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
             ),
           ),
-          
+
           // Recent Transactions Title
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Text(
                 'Recent Transactions',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-          
+
           // Transactions List
           SliverList(
             delegate: SliverChildBuilderDelegate(
@@ -87,26 +100,42 @@ class DashboardPage extends StatelessWidget {
                     ),
                   );
                 }
-                
+
                 final tx = provider.transactions[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 4.0,
+                  ),
                   child: Card(
                     elevation: 0,
                     color: theme.colorScheme.surface,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: tx.isExpense ? Colors.redAccent.withOpacity(0.1) : Colors.greenAccent.withOpacity(0.1),
+                        backgroundColor: tx.isExpense
+                            ? Colors.redAccent.withOpacity(0.1)
+                            : Colors.greenAccent.withOpacity(0.1),
                         child: Icon(
-                          tx.isExpense ? Icons.arrow_outward_rounded : Icons.arrow_downward_rounded,
+                          tx.isExpense
+                              ? Icons.arrow_outward_rounded
+                              : Icons.arrow_downward_rounded,
                           color: tx.isExpense ? Colors.redAccent : Colors.green,
                         ),
                       ),
-                      title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(tx.note.isNotEmpty ? tx.note : tx.timestamp.toString().substring(0, 10)),
+                      title: Text(
+                        tx.category,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        tx.note.isNotEmpty
+                            ? tx.note
+                            : tx.timestamp.toString().substring(0, 10),
+                      ),
                       trailing: Text(
-                        "${tx.isExpense ? '-' : '+'}৳${tx.amount.toStringAsFixed(0)}",
+                        CurrencyFormatter.formatWithSign(tx.amount, tx.isExpense),
                         style: TextStyle(
                           color: tx.isExpense ? Colors.redAccent : Colors.green,
                           fontWeight: FontWeight.bold,
@@ -115,13 +144,17 @@ class DashboardPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                );
+                ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.2, end: 0);
               },
-              childCount: provider.transactions.isEmpty ? 1 : provider.transactions.length,
+              childCount: provider.transactions.isEmpty
+                  ? 1
+                  : provider.transactions.length,
             ),
           ),
-          
-          const SliverToBoxAdapter(child: SizedBox(height: 80)), // Bottom padding
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 80),
+          ), // Bottom padding
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -137,13 +170,13 @@ class BalanceCard extends StatelessWidget {
   final double balance;
   final double income;
   final double expense;
-  
+
   const BalanceCard({
-    Key? key, 
+    super.key,
     required this.balance,
     required this.income,
     required this.expense,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +187,12 @@ class BalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark ? [const Color(0xFF1E293B), const Color(0xFF0F172A)] : [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.8)],
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.primary.withOpacity(0.8),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -164,7 +202,7 @@ class BalanceCard extends StatelessWidget {
             color: theme.colorScheme.primary.withOpacity(0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -181,7 +219,7 @@ class BalanceCard extends StatelessWidget {
             curve: Curves.easeOutCubic,
             builder: (context, value, _) {
               return Text(
-                '৳\${value.toStringAsFixed(2)}',
+                CurrencyFormatter.format(value, showDecimals: true),
                 style: theme.textTheme.headlineLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -194,8 +232,9 @@ class BalanceCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStat(context, 'Income', income, Icons.arrow_downward_rounded, Colors.greenAccent),
-              _buildStat(context, 'Expense', expense, Icons.arrow_outward_rounded, Colors.redAccent),
+              Expanded(child: _buildStat(context, 'Income', income, Icons.arrow_downward_rounded, Colors.greenAccent)),
+              const SizedBox(width: 16),
+              Expanded(child: _buildStat(context, 'Expense', expense, Icons.arrow_outward_rounded, Colors.redAccent)),
             ],
           ),
         ],
@@ -203,7 +242,13 @@ class BalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(BuildContext context, String title, double amount, IconData icon, Color color) {
+  Widget _buildStat(
+    BuildContext context,
+    String title,
+    double amount,
+    IconData icon,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     return Row(
       children: [
@@ -219,9 +264,14 @@ class BalanceCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+            Text(
+              title,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white70,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text('৳\${amount.toStringAsFixed(0)}', style: theme.textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(CurrencyFormatter.format(amount), style: theme.textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
           ],
         ),
       ],
@@ -229,9 +279,165 @@ class BalanceCard extends StatelessWidget {
   }
 }
 
+class SpendingBarChart extends StatelessWidget {
+  final List<MapEntry<DateTime, double>> data;
+  const SpendingBarChart({Key? key, required this.data}) : super(key: key);
 
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final maxVal = data.isEmpty ? 100.0 : data.map((e) => e.value).fold(0.0, (a, b) => a > b ? a : b);
+    final limit = maxVal == 0 ? 100.0 : maxVal * 1.2;
+
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Weekly Spending', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          Expanded(
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: limit,
+                barTouchData: BarTouchData(enabled: true),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value < 0 || value >= data.length) return const SizedBox.shrink();
+                        final date = data[value.toInt()].key;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(DateFormat('E').format(date).substring(0, 1), style: theme.textTheme.bodySmall),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(show: false),
+                borderData: FlBorderData(show: false),
+                barGroups: data.asMap().entries.map((e) {
+                  return BarChartGroupData(
+                    x: e.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: e.value.value,
+                        color: theme.colorScheme.primary,
+                        width: 16,
+                        borderRadius: BorderRadius.circular(4),
+                        backDrawRodData: BackgroundBarChartRodData(show: true, toY: limit, color: theme.colorScheme.primary.withOpacity(0.05)),
+                      )
+                    ],
+                  );
+                }).toList(),
+              ),
+            ).animate().scaleY(begin: 0, end: 1, duration: 1000.ms, curve: Curves.elasticOut),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CategoryPieChart extends StatelessWidget {
+  final Map<String, double> data;
+  const CategoryPieChart({Key? key, required this.data}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = [Colors.blueAccent, Colors.purpleAccent, Colors.orangeAccent, Colors.greenAccent, Colors.redAccent, Colors.tealAccent];
+
+    return Container(
+      height: 180,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Categories', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Expanded(
+            child: data.isEmpty
+                ? const Center(child: Text('No Data', style: TextStyle(fontSize: 12)))
+                : PieChart(
+                    PieChartData(
+                      sectionsSpace: 4,
+                      centerSpaceRadius: 25,
+                      sections: data.entries.toList().asMap().entries.map((e) {
+                        final index = e.key;
+                        final entry = e.value;
+                        return PieChartSectionData(
+                          color: colors[index % colors.length],
+                          value: entry.value,
+                          title: '',
+                          radius: 35,
+                        );
+                      }).toList(),
+                    ),
+                  ).animate().scale(duration: 800.ms, curve: Curves.easeOutBack),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class InsightCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+
+  const InsightCard({Key? key, required this.title, required this.value, required this.subtitle, required this.icon, required this.color}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 180,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const Spacer(),
+          Text(title, style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
+          const SizedBox(height: 4),
+          Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 2),
+          Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+}
 
 class LineChartWidget extends StatelessWidget {
+  const LineChartWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return LineChart(
