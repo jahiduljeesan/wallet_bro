@@ -26,7 +26,7 @@ void main() async {
 }
 
 class WalletBroApp extends StatelessWidget {
-  const WalletBroApp({Key? key}) : super(key: key);
+  const WalletBroApp({super.key});
 
   @override
   Widget build(BuildContext context) {

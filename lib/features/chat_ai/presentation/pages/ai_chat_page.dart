@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
 
 class AIChatPage extends StatelessWidget {
-  const AIChatPage({Key? key}) : super(key: key);
+  const AIChatPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class AIChatPage extends StatelessWidget {
 }
 
 class AIChatView extends StatefulWidget {
-  const AIChatView({Key? key}) : super(key: key);
+  const AIChatView({super.key});
 
   @override
   State<AIChatView> createState() => _AIChatViewState();
@@ -128,7 +128,7 @@ class _ChatBubble extends StatelessWidget {
   final bool isUser;
   final ThemeData theme;
 
-  const _ChatBubble({Key? key, required this.text, required this.isUser, required this.theme}) : super(key: key);
+  const _ChatBubble({super.key, required this.text, required this.isUser, required this.theme});
 
   @override
   Widget build(BuildContext context) {

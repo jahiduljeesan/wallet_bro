@@ -6,7 +6,7 @@ import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class AddTransactionSheet extends StatefulWidget {
-  const AddTransactionSheet({Key? key}) : super(key: key);
+  const AddTransactionSheet({super.key});
 
   static void show(BuildContext context) {
     showModalBottomSheet(
