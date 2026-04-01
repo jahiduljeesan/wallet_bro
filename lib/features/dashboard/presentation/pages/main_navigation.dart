@@ -8,7 +8,7 @@ import '../../../statistics/presentation/pages/statistics_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({Key? key}) : super(key: key);
+  const MainNavigation({super.key});
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();

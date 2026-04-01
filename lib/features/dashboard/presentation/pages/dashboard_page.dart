@@ -281,7 +281,7 @@ class BalanceCard extends StatelessWidget {
 
 class SpendingBarChart extends StatelessWidget {
   final List<MapEntry<DateTime, double>> data;
-  const SpendingBarChart({Key? key, required this.data}) : super(key: key);
+  const SpendingBarChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +354,7 @@ class SpendingBarChart extends StatelessWidget {
 
 class CategoryPieChart extends StatelessWidget {
   final Map<String, double> data;
-  const CategoryPieChart({Key? key, required this.data}) : super(key: key);
+  const CategoryPieChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +406,7 @@ class InsightCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const InsightCard({Key? key, required this.title, required this.value, required this.subtitle, required this.icon, required this.color}) : super(key: key);
+  const InsightCard({super.key, required this.title, required this.value, required this.subtitle, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {

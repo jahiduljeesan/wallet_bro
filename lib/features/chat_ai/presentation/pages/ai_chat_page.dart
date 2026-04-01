@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/chat_provider.dart';
 
 class AIChatPage extends StatelessWidget {
@@ -62,10 +64,31 @@ class _AIChatViewState extends State<AIChatView> {
                   text: msg.text,
                   isUser: msg.isUser,
                   theme: theme,
-                );
+                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
               },
             ),
           ),
+          
+          if (provider.isLoading)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                   Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'AI is typing...', 
+                      style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)
+                    ),
+                  ).animate(onPlay: (controller) => controller.repeat())
+                    .shimmer(duration: 1200.ms, color: theme.colorScheme.primary.withOpacity(0.2))
+                ],
+              ),
+            ),
           
           // Input Area
           Container(
@@ -123,43 +146,109 @@ class _AIChatViewState extends State<AIChatView> {
   }
 }
 
-class _ChatBubble extends StatelessWidget {
+class _ChatBubble extends StatefulWidget {
   final String text;
   final bool isUser;
   final ThemeData theme;
 
-  const _ChatBubble({super.key, required this.text, required this.isUser, required this.theme});
+  const _ChatBubble({
+    required this.text,
+    required this.isUser,
+    required this.theme,
+  });
+
+  @override
+  State<_ChatBubble> createState() => _ChatBubbleState();
+}
+
+class _ChatBubbleState extends State<_ChatBubble> {
+  bool _showCopy = false;
+
+  void _copyToClipboard() {
+    Clipboard.setData(ClipboardData(text: widget.text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Text copied to clipboard'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+    setState(() => _showCopy = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isUser ? theme.colorScheme.primary : theme.colorScheme.surface,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(isUser ? 20 : 0),
-            bottomRight: Radius.circular(isUser ? 0 : 20),
-          ),
-          boxShadow: [
-            if (!isUser) // Subtle shadow only for AI bubble
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              )
+      alignment: widget.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: GestureDetector(
+        onTap: () => setState(() => _showCopy = !_showCopy),
+        child: Column(
+          crossAxisAlignment: widget.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: widget.isUser ? widget.theme.colorScheme.primary : widget.theme.colorScheme.surface,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(20),
+                      topRight: const Radius.circular(20),
+                      bottomLeft: Radius.circular(widget.isUser ? 20 : 0),
+                      bottomRight: Radius.circular(widget.isUser ? 0 : 20),
+                    ),
+                    boxShadow: [
+                      if (!widget.isUser)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        )
+                    ],
+                  ),
+                  child: SelectionArea(
+                    child: Text(
+                      widget.text,
+                      style: widget.theme.textTheme.bodyMedium?.copyWith(
+                        color: widget.isUser ? Colors.white : widget.theme.textTheme.bodyLarge?.color,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_showCopy)
+                  Positioned(
+                    top: -10,
+                    right: widget.isUser ? null : -10,
+                    left: widget.isUser ? -10 : null,
+                    child: GestureDetector(
+                      onTap: _copyToClipboard,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: widget.theme.colorScheme.primaryContainer,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            )
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.copy_rounded,
+                          size: 14,
+                          color: widget.theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ).animate().scale(duration: 200.ms, curve: Curves.easeOutBack).fadeIn(),
+                  ),
+              ],
+            ),
           ],
-        ),
-        child: Text(
-          text,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: isUser ? Colors.white : theme.textTheme.bodyLarge?.color,
-            fontSize: 16,
-          ),
         ),
       ),
     );
