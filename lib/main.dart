@@ -7,6 +7,7 @@ import 'core/theme/theme_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/pages/auth_gate.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'features/accounts/presentation/providers/accounts_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +16,7 @@ void main() async {
   try {
     // await Firebase.initializeApp(); // Uncomment after setting up firebase
   } catch (e) {
-    debugPrint('Firebase init error: \$e');
+    debugPrint('Firebase init error: $e');
   }
 
   // Initialize Local Storage
@@ -34,6 +35,7 @@ class WalletBroApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => AccountsProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {

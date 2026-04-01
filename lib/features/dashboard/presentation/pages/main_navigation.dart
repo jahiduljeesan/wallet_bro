@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../chat_ai/presentation/pages/ai_chat_page.dart';
 import '../../../statistics/presentation/pages/statistics_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../accounts/presentation/pages/accounts_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -21,7 +22,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const DashboardPage(),
     const AIChatPage(), // Actually we check conditionally
     const StatisticsPage(),
-    const Center(child: Text("Accounts Placeholder")),
+    const AccountsPage(),
     const ProfilePage(),
   ];
 
