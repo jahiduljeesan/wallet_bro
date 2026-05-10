@@ -6,9 +6,11 @@ import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class AddTransactionSheet extends StatefulWidget {
-  const AddTransactionSheet({super.key});
+  final TransactionModel? transaction;
+  
+  const AddTransactionSheet({super.key, this.transaction});
 
-  static void show(BuildContext context) {
+  static void show(BuildContext context, {TransactionModel? transaction}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -17,7 +19,7 @@ class AddTransactionSheet extends StatefulWidget {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: const AddTransactionSheet(),
+        child: AddTransactionSheet(transaction: transaction),
       ),
     );
   }
@@ -32,6 +34,18 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   final _noteController = TextEditingController();
   bool isExpense = true;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.transaction != null) {
+      final tx = widget.transaction!;
+      _amountController.text = tx.amount.toString();
+      _categoryController.text = tx.category;
+      _noteController.text = tx.note;
+      isExpense = tx.isExpense;
+    }
+  }
+
   void _saveTransaction() {
     final amountParsed = double.tryParse(_amountController.text) ?? 0.0;
     if (amountParsed <= 0 || _categoryController.text.isEmpty) {
@@ -40,13 +54,13 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     }
 
     final tx = TransactionModel(
-      id: const Uuid().v4(),
+      id: widget.transaction?.id ?? const Uuid().v4(),
       amount: amountParsed,
       category: _categoryController.text,
       note: _noteController.text,
-      timestamp: DateTime.now(),
-      createdBy: 'manual',
-      accountId: 'default_account',
+      timestamp: widget.transaction?.timestamp ?? DateTime.now(),
+      createdBy: widget.transaction?.createdBy ?? 'manual',
+      accountId: widget.transaction?.accountId ?? 'default_account',
       isExpense: isExpense,
     );
 
@@ -56,9 +70,10 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     // Check if mounted before returning
     if (context.mounted) {
       Navigator.pop(context);
+      final action = widget.transaction != null ? 'Updated' : 'Added';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Added ৳\${tx.amount.toStringAsFixed(0)} to \${tx.category}'),
+          content: Text('$action ৳${tx.amount.toStringAsFixed(0)} for ${tx.category}'),
           backgroundColor: Theme.of(context).colorScheme.primary,
           behavior: SnackBarBehavior.floating,
         ),
@@ -96,7 +111,31 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('New Transaction', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.transaction != null ? 'Edit Transaction' : 'New Transaction', 
+                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)
+                ),
+                if (widget.transaction != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    onPressed: () {
+                      final provider = Provider.of<DashboardProvider>(context, listen: false);
+                      provider.deleteTransaction(widget.transaction!.id);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Transaction deleted'),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
             const SizedBox(height: 16),
             
             // Type toggle
@@ -181,7 +220,10 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                 padding: const EdgeInsets.all(16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('Save Transaction', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(
+                widget.transaction != null ? 'Update Transaction' : 'Save Transaction', 
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+              ),
             ),
           ],
         ),

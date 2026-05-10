@@ -34,7 +34,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    auth.isGuest ? 'Guest User' : 'Google User',
+                    auth.isGuest ? 'Guest User' : 'Guest User',
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   if (auth.isGuest)

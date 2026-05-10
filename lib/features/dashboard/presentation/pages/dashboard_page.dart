@@ -107,39 +107,63 @@ class DashboardPage extends StatelessWidget {
                     horizontal: 16.0,
                     vertical: 4.0,
                   ),
-                  child: Card(
-                    elevation: 0,
-                    color: theme.colorScheme.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                  child: Dismissible(
+                    key: ValueKey(tx.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.delete_outline, color: Colors.white),
                     ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: tx.isExpense
-                            ? Colors.redAccent.withOpacity(0.1)
-                            : Colors.greenAccent.withOpacity(0.1),
-                        child: Icon(
-                          tx.isExpense
-                              ? Icons.arrow_outward_rounded
-                              : Icons.arrow_downward_rounded,
-                          color: tx.isExpense ? Colors.redAccent : Colors.green,
+                    onDismissed: (direction) {
+                      provider.deleteTransaction(tx.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Transaction deleted'),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
                         ),
+                      );
+                    },
+                    child: Card(
+                      elevation: 0,
+                      color: theme.colorScheme.surface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      title: Text(
-                        tx.category,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        tx.note.isNotEmpty
-                            ? tx.note
-                            : tx.timestamp.toString().substring(0, 10),
-                      ),
-                      trailing: Text(
-                        CurrencyFormatter.formatWithSign(tx.amount, tx.isExpense),
-                        style: TextStyle(
-                          color: tx.isExpense ? Colors.redAccent : Colors.green,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      child: ListTile(
+                        onTap: () => AddTransactionSheet.show(context, transaction: tx),
+                        leading: CircleAvatar(
+                          backgroundColor: tx.isExpense
+                              ? Colors.redAccent.withOpacity(0.1)
+                              : Colors.greenAccent.withOpacity(0.1),
+                          child: Icon(
+                            tx.isExpense
+                                ? Icons.arrow_outward_rounded
+                                : Icons.arrow_downward_rounded,
+                            color: tx.isExpense ? Colors.redAccent : Colors.green,
+                          ),
+                        ),
+                        title: Text(
+                          tx.category,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          tx.note.isNotEmpty
+                              ? tx.note
+                              : tx.timestamp.toString().substring(0, 10),
+                        ),
+                        trailing: Text(
+                          CurrencyFormatter.formatWithSign(tx.amount, tx.isExpense),
+                          style: TextStyle(
+                            color: tx.isExpense ? Colors.redAccent : Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
