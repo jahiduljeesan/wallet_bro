@@ -1,46 +1,73 @@
-# 💸 Wallet Bro
+# <p align="center"><img src="https://i.ibb.co.com/LzX1n6t7/app-logo.jpg" alt="Wallet Buddy Logo" width="120"></p>
+# <p align="center">Wallet Buddy</p>
 
-[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Firebase](https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white)](https://firebase.google.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
+  <img src="https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white" alt="Firebase">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT">
+</p>
 
-**Wallet Bro** is a premium, AI-powered personal finance management application built with Flutter. It combines sleek design with powerful tracking capabilities and AI-driven financial insights to help you take control of your wealth.
+---
 
-![Promo Banner](assets/images/promo_banner.png)
+**Wallet Buddy** is a premium, AI-powered personal finance management application built with Flutter. It combines sleek design with powerful tracking capabilities and AI-driven financial insights to help you take control of your wealth.
+
+![Promo Banner](https://i.ibb.co.com/5Xyc4dPq/promo-banner.jpg)
+
+---
+
+## 📱 Visual Showcase
+
+<table border="0">
+  <tr>
+    <td><img src="https://i.ibb.co.com/JwpyC3mZ/Screenshot-20260510-213506.png" width="200" alt="Dashboard"></td>
+    <td><img src="https://i.ibb.co.com/hxdbyxcy/Screenshot-20260510-213553.png" width="200" alt="Statistics"></td>
+    <td><img src="https://i.ibb.co.com/JW4tW7ny/Screenshot-20260510-213752.png" width="200" alt="AI Assistant"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Dashboard</b></td>
+    <td align="center"><b>Analytics</b></td>
+    <td align="center"><b>AI Chat</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://i.ibb.co.com/RkfBT1HL/Screenshot-20260510-213450.png" width="200" alt="Accounts"></td>
+    <td><img src="https://i.ibb.co.com/gbW6TNVr/Screenshot-20260510-213318.png" width="200" alt="Auth"></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Accounts</b></td>
+    <td align="center"><b>Authentication</b></td>
+    <td></td>
+  </tr>
+</table>
 
 ---
 
 ## ✨ Features
 
-### 🤖 AI Chat Assistant
-- Get personalized financial advice.
-- Ask questions about your spending habits.
-- Receive smart insights and budget recommendations.
+### 🤖 AI Financial Buddy
+- **Personalized Advice:** Get tailored financial guidance based on your spending.
+- **Smart Queries:** Ask about your balance, top expenses, or budget tips.
+- **AI Insights:** Receive proactive suggestions to improve your financial health.
 
 ### 📊 Advanced Analytics
-- Beautiful, interactive charts using `fl_chart`.
-- Spending breakdown by category and time period.
-- Neon-themed visual aesthetics for dark mode.
+- **Dynamic Charts:** Visualize your income and expenses with beautiful, interactive charts.
+- **Categorized Spending:** Understand exactly where your money goes.
+- **Neon Aesthetics:** A modern, high-contrast dark mode design for clarity.
 
 ### 💳 Transaction Management
-- Quickly log income and expenses with an intuitive UI.
-- Categorize transactions and add notes.
-- Real-time updates across all your devices.
+- **Seamless Logging:** Add transactions in seconds with a smooth, intuitive interface.
+- **Rich Details:** Categorize, date, and add notes to every entry.
+- **Real-time Sync:** Your data is always up-to-date across all platforms.
 
 ### 🏦 Multi-Account Support
-- Manage multiple bank accounts, credit cards, and digital wallets.
-- View individual account balances and total net worth.
-- Seamlessly transition between different financial sources.
+- **Full Control:** Manage bank accounts, digital wallets, and cash in one place.
+- **Net Worth Tracking:** View your consolidated balance at a glance.
+- **Easy Transfers:** Keep track of movements between your accounts.
 
-### 📱 Premium UX/UI
-- Smooth animations powered by `Lottie` and `Flutter Animate`.
-- Dark and Light mode support using `Google Fonts (Outfit)`.
-- Glassmorphism design elements and responsive layouts.
-
-### 🔒 Secure & Reliable
-- Robust authentication via **Firebase Auth** and **Google Sign-In**.
-- Data persistence using **Cloud Firestore** and **Hive** for offline-first capabilities.
-- Privacy-focused and secure data handling.
+### 🎨 Premium UX/UI
+- **Glassmorphism:** Elegant UI elements with subtle transparency and blur effects.
+- **Smooth Animations:** Fluid transitions powered by Lottie and Flutter Animate.
+- **Responsive Design:** Optimized for a consistent experience on all devices.
 
 ---
 
@@ -48,8 +75,8 @@
 
 - **Framework:** [Flutter](https://flutter.dev)
 - **State Management:** [Provider](https://pub.dev/packages/provider)
-- **Database:** [Cloud Firestore](https://firebase.google.com/docs/firestore) & [Hive](https://pub.dev/packages/hive)
-- **Auth:** [Firebase Authentication](https://firebase.google.com/docs/auth)
+- **Database:** [Cloud Firestore](https://firebase.google.com/docs/firestore) (Cloud) & [Hive](https://pub.dev/packages/hive) (Local)
+- **Auth:** [Firebase Authentication](https://firebase.google.com/docs/auth) & [Google Sign-In](https://pub.dev/packages/google_sign_in)
 - **Networking:** [Dio](https://pub.dev/packages/dio)
 - **Animations:** [Lottie](https://pub.dev/packages/lottie) & [Flutter Animate](https://pub.dev/packages/flutter_animate)
 - **UI Components:** [Google Fonts](https://pub.dev/packages/google_fonts) (Outfit), [Fl Chart](https://pub.dev/packages/fl_chart)
@@ -62,7 +89,7 @@
 
 - Flutter SDK (v3.10.3 or higher)
 - Android Studio / VS Code
-- Firebase Project (for cloud sync)
+- Firebase Project
 
 ### Installation
 
@@ -79,8 +106,7 @@
 
 3. **Set up Firebase:**
    - Create a project on the [Firebase Console](https://console.firebase.google.com/).
-   - Add your Android/iOS app and download the configuration files (`google-services.json` / `GoogleService-Info.plist`).
-   - Place them in their respective directories (`android/app/` and `ios/Runner/`).
+   - Add your configuration files (`google-services.json` / `GoogleService-Info.plist`).
 
 4. **Run the app:**
    ```bash
@@ -97,12 +123,12 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 🤝 Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+2. Create your Feature Branch
+3. Commit your Changes
+4. Push to the Branch
 5. Open a Pull Request
 
 ---
