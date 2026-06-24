@@ -88,6 +88,7 @@ class _AddAccountSheetState extends State<AddAccountSheet> {
               ButtonSegment(value: 'Bank', icon: Icon(Icons.account_balance_outlined), label: Text('Bank')),
               ButtonSegment(value: 'Cash', icon: Icon(Icons.money_outlined), label: Text('Cash')),
               ButtonSegment(value: 'Mobile', icon: Icon(Icons.phone_iphone_outlined), label: Text('Mobile')),
+              ButtonSegment(value: 'Saving', icon: Icon(Icons.savings_outlined), label: Text('Saving')),
             ],
             selected: {_selectedType},
             onSelectionChanged: (Set<String> newSelection) {

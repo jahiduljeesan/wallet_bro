@@ -23,6 +23,8 @@ class AccountsPage extends StatelessWidget {
         return Icons.account_balance_outlined;
       case 'mobile':
         return Icons.phone_iphone_outlined;
+      case 'saving':
+        return Icons.savings_outlined;
       case 'cash':
       default:
         return Icons.money_outlined;
