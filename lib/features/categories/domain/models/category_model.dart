@@ -34,4 +34,28 @@ class CategoryModel extends HiveObject {
     this.iconFontFamily,
     this.isCustom = false,
   });
+
+  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    return CategoryModel(
+      id: json['id'],
+      name: json['name'],
+      isExpense: json['isExpense'] ?? true,
+      iconPath: json['iconPath'],
+      iconCodePoint: json['iconCodePoint'],
+      iconFontFamily: json['iconFontFamily'],
+      isCustom: json['isCustom'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'isExpense': isExpense,
+      'iconPath': iconPath,
+      'iconCodePoint': iconCodePoint,
+      'iconFontFamily': iconFontFamily,
+      'isCustom': isCustom,
+    };
+  }
 }
