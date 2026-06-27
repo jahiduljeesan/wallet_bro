@@ -64,7 +64,7 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
         ### 🚫 Non-Financial Topics
         If the user asks about anything unrelated to finance, reply briefly:
         “I can only help with finance-related topics in ExpenseBuddy.”
-        but you can greet the user.
+        but you can greet the user in a friendly way.
         
         If user asks about data and calculation then give them organized details based on the database state.
         
@@ -73,7 +73,7 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
         ### 🧩 Summary of Behavior
         - **Transaction-related input → JSON object** (with `parsedCommandModels` array and optional `advice`)  
         - **Calculation or query → Text answer**  
-        - **Non-finance topic → Refusal message**
+        - **Non-finance topic exept → Refusal message**
 ''';
 
   Future<String> generateResponse(String prompt) async {
@@ -103,7 +103,9 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
       } else {
         for (var acc in accounts) {
           final liveBal = balances[acc.id] ?? acc.initialBalance;
-          dbContext.writeln("- Account ID: ${acc.id}, Name: ${acc.name}, Type: ${acc.type}, Live Balance: ৳${liveBal.toStringAsFixed(2)}");
+          dbContext.writeln(
+            "- Account ID: ${acc.id}, Name: ${acc.name}, Type: ${acc.type}, Live Balance: ৳${liveBal.toStringAsFixed(2)}",
+          );
         }
       }
 
@@ -114,8 +116,15 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
         final sortedTx = List<TransactionModel>.from(transactions)
           ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
         for (var tx in sortedTx) {
-          final accName = accounts.firstWhere((a) => a.id == tx.accountId, orElse: () => AccountModel(id: '', name: 'Unknown', type: '')).name;
-          dbContext.writeln("- Date: ${tx.timestamp.toIso8601String().substring(0, 10)} ${tx.timestamp.hour.toString().padLeft(2, '0')}:${tx.timestamp.minute.toString().padLeft(2, '0')}, Account: $accName (ID: ${tx.accountId}), Amount: ৳${tx.amount.toStringAsFixed(2)}, Category: ${tx.category}, Note: ${tx.note}, Type: ${tx.isExpense ? 'Expense' : 'Income'}");
+          final accName = accounts
+              .firstWhere(
+                (a) => a.id == tx.accountId,
+                orElse: () => AccountModel(id: '', name: 'Unknown', type: ''),
+              )
+              .name;
+          dbContext.writeln(
+            "- Date: ${tx.timestamp.toIso8601String().substring(0, 10)} ${tx.timestamp.hour.toString().padLeft(2, '0')}:${tx.timestamp.minute.toString().padLeft(2, '0')}, Account: $accName (ID: ${tx.accountId}), Amount: ৳${tx.amount.toStringAsFixed(2)}, Category: ${tx.category}, Note: ${tx.note}, Type: ${tx.isExpense ? 'Expense' : 'Income'}",
+          );
         }
       }
 
@@ -130,14 +139,12 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
           },
         ),
         data: {
-          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "model": "cohere/north-mini-code:free",
           "messages": [
             {"role": "system", "content": fullSystemPrompt},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
           ],
-          "reasoning": {
-            "enabled": true
-          }
+          "reasoning": {"enabled": true},
         },
       );
 
@@ -150,7 +157,8 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
       }
     } on DioException catch (e) {
       if (e.response != null) {
-        final errorMsg = e.response?.data['error']['message'] ?? 'Unknown Error';
+        final errorMsg =
+            e.response?.data['error']['message'] ?? 'Unknown Error';
         return "OpenRouter API Error: $errorMsg";
       }
       return "Network Error: Please check your connection.";
