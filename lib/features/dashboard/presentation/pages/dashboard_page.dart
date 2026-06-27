@@ -7,6 +7,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../providers/dashboard_provider.dart';
 
 import '../../../transactions/presentation/pages/add_transaction_sheet.dart';
+import '../../../categories/presentation/widgets/category_icon.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -141,11 +142,13 @@ class DashboardPage extends StatelessWidget {
                           backgroundColor: tx.isExpense
                               ? Colors.redAccent.withOpacity(0.1)
                               : Colors.greenAccent.withOpacity(0.1),
-                          child: Icon(
-                            tx.isExpense
-                                ? Icons.arrow_outward_rounded
-                                : Icons.arrow_downward_rounded,
-                            color: tx.isExpense ? Colors.redAccent : Colors.green,
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: CategoryIcon(
+                              categoryName: tx.category,
+                              isExpense: tx.isExpense,
+                              size: 24,
+                            ),
                           ),
                         ),
                         title: Text(

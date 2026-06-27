@@ -8,6 +8,7 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/pages/auth_gate.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'features/accounts/presentation/providers/accounts_provider.dart';
+import 'features/categories/presentation/providers/category_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,7 @@ class WalletBroApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => AccountsProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {

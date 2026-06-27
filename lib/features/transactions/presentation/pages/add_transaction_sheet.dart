@@ -6,6 +6,9 @@ import 'package:uuid/uuid.dart';
 import '../../domain/models/transaction_model.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
+import '../../../categories/presentation/providers/category_provider.dart';
+import '../../../categories/presentation/widgets/category_icon.dart';
+import '../../../categories/presentation/pages/category_management_page.dart';
 
 class AddTransactionSheet extends StatefulWidget {
   final TransactionModel? transaction;
@@ -421,21 +424,123 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                 const SizedBox(height: 16),
               ],
 
-              // Category Field (only if not a transfer)
+              // Category Selector (only if not a transfer)
               if (!isTransfer) ...[
-                TextField(
-                  controller: _categoryController,
-                  decoration: InputDecoration(
-                    labelText: 'Category (e.g. Food, Transport)',
-                    filled: true,
-                    prefixIcon: const Icon(Icons.category_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Category',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                Consumer<CategoryProvider>(
+                  builder: (context, categoryProvider, child) {
+                    final cats = isExpense
+                        ? categoryProvider.expenseCategories
+                        : categoryProvider.incomeCategories;
+
+                    return SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: cats.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == cats.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0, top: 4, bottom: 4),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const CategoryManagementPage(),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  width: 80,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.settings_outlined),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Manage',
+                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          final cat = cats[index];
+                          final isSelected = _categoryController.text.toLowerCase() == cat.name.toLowerCase();
+
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0, top: 4, bottom: 4),
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _categoryController.text = cat.name;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? theme.colorScheme.primaryContainer
+                                      : theme.colorScheme.surface,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.outlineVariant,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CategoryIcon(
+                                      categoryName: cat.name,
+                                      isExpense: cat.isExpense,
+                                      size: 32,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                      child: Text(
+                                        cat.name,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
               ],
 
               TextField(
