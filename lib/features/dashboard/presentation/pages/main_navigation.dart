@@ -5,7 +5,7 @@ import 'dashboard_page.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../chat_ai/presentation/pages/ai_chat_page.dart';
 import '../../../statistics/presentation/pages/statistics_page.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../debts/presentation/pages/debt_page.dart';
 import '../../../accounts/presentation/pages/accounts_page.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -22,8 +22,8 @@ class _MainNavigationState extends State<MainNavigation> {
     const DashboardPage(),
     const AIChatPage(), // Actually we check conditionally
     const StatisticsPage(),
+    const DebtPage(),
     const AccountsPage(),
-    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -132,14 +132,14 @@ class _MainNavigationState extends State<MainNavigation> {
             label: 'Stats',
           ),
           NavigationDestination(
+            icon: Icon(Icons.money_off_csred_outlined),
+            selectedIcon: Icon(Icons.money_off_csred_rounded),
+            label: 'Debts',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.account_balance_wallet_outlined),
             selectedIcon: Icon(Icons.account_balance_wallet_rounded),
             label: 'Accounts',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
           ),
         ],
       ),

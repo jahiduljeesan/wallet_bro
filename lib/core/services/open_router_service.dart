@@ -3,6 +3,7 @@ import '../config/app_config.dart';
 import 'hive_service.dart';
 import '../../features/transactions/domain/models/transaction_model.dart';
 import '../../features/accounts/domain/models/account_model.dart';
+import 'package:intl/intl.dart';
 
 class OpenRouterService {
   final Dio _dio = Dio();
@@ -23,6 +24,9 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
           "parsedCommandModels": [
             {"category":"...", "amount":123, "type":"Income|Expense", "remark":"..."}
           ],
+          "transfers": [
+            {"fromAccount":"...", "toAccount":"...", "amount":123}
+          ],
           "advice":"..."
         }
         
@@ -30,6 +34,7 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
         
         {
           "parsedCommandModels": [],
+          "transfers": [],
           "advice":"..."
         }
         
@@ -71,21 +76,32 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
         ---
         
         ### 🧩 Summary of Behavior
-        - **Transaction-related input → JSON object** (with `parsedCommandModels` array and optional `advice`)  
+        - **Transaction-related input → JSON object** (with `parsedCommandModels` array, `transfers` array, and optional `advice`)  
         - **Calculation or query → Text answer**  
         - **Non-finance topic exept → Refusal message**
 ''';
 
   Future<String> generateResponse(String prompt) async {
     try {
+      final now = DateTime.now();
+      final currentMonthId = DateFormat('yyyy-MM').format(now);
+      
+      final previousMonth = DateTime(now.year, now.month - 1, 1);
+      final previousMonthId = DateFormat('yyyy-MM').format(previousMonth);
+
       final accounts = HiveService.accountsBox.values.toList();
-      final transactions = HiveService.transactionsBox.values.toList();
+      final allTransactions = HiveService.transactionsBox.values.toList();
+      
+      // Filter for current month
+      final currentMonthTransactions = allTransactions.where((tx) {
+        return DateFormat('yyyy-MM').format(tx.timestamp) == currentMonthId;
+      }).toList();
 
       final Map<String, double> balances = {};
       for (var acc in accounts) {
         balances[acc.id] = acc.initialBalance;
       }
-      for (var tx in transactions) {
+      for (var tx in allTransactions) {
         if (balances.containsKey(tx.accountId)) {
           if (tx.isExpense) {
             balances[tx.accountId] = balances[tx.accountId]! - tx.amount;
@@ -97,23 +113,46 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
 
       final StringBuffer dbContext = StringBuffer();
       dbContext.writeln("\n\n### LIVE DATABASE CONTEXT FOR JEMI ###");
-      dbContext.writeln("Accounts & Balances:");
+      
+      // Add Previous Month Summary
+      final prevSummary = HiveService.monthlySummariesBox.get(previousMonthId);
+      if (prevSummary != null) {
+         dbContext.writeln("Previous Month ($previousMonthId) Summary:");
+         dbContext.writeln("- Total Income: ৳${prevSummary.totalIncome.toStringAsFixed(2)}");
+         dbContext.writeln("- Total Expense: ৳${prevSummary.totalExpense.toStringAsFixed(2)}");
+         dbContext.writeln("- Top Categories: ${prevSummary.categoryBreakdown.entries.toList()..sort((a,b) => b.value.compareTo(a.value))..take(3).map((e) => '${e.key}(৳${e.value})').join(', ')}");
+         dbContext.writeln("");
+      }
+
+      // Add Overall stats
+      double overallIncome = 0;
+      double overallExpense = 0;
+      for (var tx in allTransactions) {
+        if (tx.isExpense && tx.category != 'Transfer') overallExpense += tx.amount;
+        if (!tx.isExpense && tx.category != 'Transfer' && tx.category != 'Savings') overallIncome += tx.amount;
+      }
+      dbContext.writeln("Overall Lifetime Summary:");
+      dbContext.writeln("- Lifetime Income: ৳${overallIncome.toStringAsFixed(2)}");
+      dbContext.writeln("- Lifetime Expense: ৳${overallExpense.toStringAsFixed(2)}");
+      dbContext.writeln("");
+
+      dbContext.writeln("Accounts & Live Balances (Available for Transfer):");
       if (accounts.isEmpty) {
         dbContext.writeln("- No accounts registered.");
       } else {
         for (var acc in accounts) {
           final liveBal = balances[acc.id] ?? acc.initialBalance;
           dbContext.writeln(
-            "- Account ID: ${acc.id}, Name: ${acc.name}, Type: ${acc.type}, Live Balance: ৳${liveBal.toStringAsFixed(2)}",
+            "- Account ID: '${acc.id}', Name: '${acc.name}', Type: ${acc.type}, Live Balance: ৳${liveBal.toStringAsFixed(2)}",
           );
         }
       }
 
-      dbContext.writeln("\nRecorded Transactions (sorted newest to oldest):");
-      if (transactions.isEmpty) {
-        dbContext.writeln("- No transactions recorded.");
+      dbContext.writeln("\nRecorded Transactions for THIS MONTH ($currentMonthId):");
+      if (currentMonthTransactions.isEmpty) {
+        dbContext.writeln("- No transactions recorded this month.");
       } else {
-        final sortedTx = List<TransactionModel>.from(transactions)
+        final sortedTx = List<TransactionModel>.from(currentMonthTransactions)
           ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
         for (var tx in sortedTx) {
           final accName = accounts

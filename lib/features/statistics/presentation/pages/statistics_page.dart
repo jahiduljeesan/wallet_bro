@@ -72,10 +72,7 @@ class _StatisticsViewState extends State<StatisticsView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Statistics'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Statistics'), elevation: 0),
       body: CustomScrollView(
         slivers: [
           // Month Selector
@@ -101,7 +98,9 @@ class _StatisticsViewState extends State<StatisticsView> {
                       },
                       selectedColor: theme.colorScheme.primary,
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
+                        color: isSelected
+                            ? Colors.white
+                            : theme.textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -110,7 +109,7 @@ class _StatisticsViewState extends State<StatisticsView> {
               ),
             ),
           ),
-          
+
           // Monthly Summary Cards
           SliverToBoxAdapter(
             child: Padding(
@@ -138,46 +137,185 @@ class _StatisticsViewState extends State<StatisticsView> {
               ),
             ),
           ),
-          
-          // Category Breakdown Title
+
+          // Analytics Title
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Text(
-                'Income vs Expense',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                'Insights & Analytics',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-          
-          // Basic Pie Chart
+
+          // Advanced Analytics View
           if (currentSummary['income']! > 0 || currentSummary['expense']! > 0)
             SliverToBoxAdapter(
-              child: SizedBox(
-                height: 200,
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 4,
-                    centerSpaceRadius: 40,
-                    sections: [
-                      if (currentSummary['income']! > 0)
-                        PieChartSectionData(
-                          color: Colors.greenAccent,
-                          value: currentSummary['income']!,
-                          title: "${((currentSummary['income']! / (currentSummary['income']! + currentSummary['expense']!)) * 100).toStringAsFixed(0)}%",
-                          radius: 50,
-                          titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Income vs Expense Pie Chart
+                    Text(
+                      'Income vs Expense',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 200,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 4,
+                          centerSpaceRadius: 40,
+                          sections: [
+                            if (currentSummary['income']! > 0)
+                              PieChartSectionData(
+                                color: Colors.greenAccent,
+                                value: currentSummary['income']!,
+                                title:
+                                    "${((currentSummary['income']! / (currentSummary['income']! + currentSummary['expense']!)) * 100).toStringAsFixed(0)}%",
+                                radius: 50,
+                                titleStyle: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            if (currentSummary['expense']! > 0)
+                              PieChartSectionData(
+                                color: Colors.redAccent,
+                                value: currentSummary['expense']!,
+                                title:
+                                    "${((currentSummary['expense']! / (currentSummary['income']! + currentSummary['expense']!)) * 100).toStringAsFixed(0)}%",
+                                radius: 50,
+                                titleStyle: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                          ],
                         ),
-                      if (currentSummary['expense']! > 0)
-                        PieChartSectionData(
-                          color: Colors.redAccent,
-                          value: currentSummary['expense']!,
-                          title: "${((currentSummary['expense']! / (currentSummary['income']! + currentSummary['expense']!)) * 100).toStringAsFixed(0)}%",
-                          radius: 50,
-                          titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Daily Expenses Chart
+                    Text(
+                      'Daily Expenses',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 180,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY:
+                              (provider
+                                  .getDailyExpenses(_selectedMonth!)
+                                  .values
+                                  .fold<double>(0.0, (m, v) => m > v ? m : v)) *
+                              1.2,
+                          barTouchData: BarTouchData(enabled: false),
+                          titlesData: FlTitlesData(
+                            show: true,
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, meta) {
+                                  if (value % 5 != 0 && value != 1)
+                                    return const SizedBox.shrink();
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      value.toInt().toString(),
+                                      style: const TextStyle(fontSize: 10),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            leftTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                          ),
+                          gridData: const FlGridData(show: false),
+                          borderData: FlBorderData(show: false),
+                          barGroups: provider
+                              .getDailyExpenses(_selectedMonth!)
+                              .entries
+                              .map((e) {
+                                return BarChartGroupData(
+                                  x: e.key,
+                                  barRods: [
+                                    BarChartRodData(
+                                      toY: e.value,
+                                      color: Colors.redAccent,
+                                      width: 8,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ],
+                                );
+                              })
+                              .toList(),
                         ),
-                    ],
-                  ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Top Categories
+                    Text(
+                      'Top Expense Categories',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...provider
+                        .getTopCategories(_selectedMonth!, isExpense: true)
+                        .take(3)
+                        .map((e) {
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.redAccent.withOpacity(
+                                0.1,
+                              ),
+                              child: CategoryIcon(
+                                categoryName: e.key,
+                                isExpense: true,
+                                size: 20,
+                              ),
+                            ),
+                            title: Text(e.key),
+                            trailing: Text(
+                              '৳${e.value.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.redAccent,
+                              ),
+                            ),
+                          );
+                        }),
+                  ],
                 ),
               ),
             )
@@ -185,62 +323,76 @@ class _StatisticsViewState extends State<StatisticsView> {
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(32.0),
-                child: Center(child: Text("No data for chart")),
+                child: Center(child: Text("No data for analytics")),
               ),
             ),
-          
+
           // Transactions List Title
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0).copyWith(top: 24),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ).copyWith(top: 24),
               child: Text(
                 'Transactions in ${_formatMonthHeader(_selectedMonth!)}',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-          
+
           // Transactions List
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final tx = currentTxs[index];
-                final dateStr = DateFormat('MMM d, y h:mm a').format(tx.timestamp);
-                
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                  child: Card(
-                    elevation: 0,
-                    color: theme.colorScheme.surface,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: tx.isExpense ? Colors.redAccent.withOpacity(0.1) : Colors.greenAccent.withOpacity(0.1),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: CategoryIcon(
-                            categoryName: tx.category,
-                            isExpense: tx.isExpense,
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                      title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(tx.note.isNotEmpty ? tx.note : dateStr),
-                      trailing: Text(
-                        "${tx.isExpense ? '-' : '+'}৳${tx.amount.toStringAsFixed(0)}",
-                        style: TextStyle(
-                          color: tx.isExpense ? Colors.redAccent : Colors.green,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final tx = currentTxs[index];
+              final dateStr = DateFormat(
+                'MMM d, y h:mm a',
+              ).format(tx.timestamp);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 4.0,
+                ),
+                child: Card(
+                  elevation: 0,
+                  color: theme.colorScheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: tx.isExpense
+                          ? Colors.redAccent.withOpacity(0.1)
+                          : Colors.greenAccent.withOpacity(0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: CategoryIcon(
+                          categoryName: tx.category,
+                          isExpense: tx.isExpense,
+                          size: 24,
                         ),
                       ),
                     ),
+                    title: Text(
+                      tx.category,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(tx.note.isNotEmpty ? tx.note : dateStr),
+                    trailing: Text(
+                      "${tx.isExpense ? '-' : '+'}৳${tx.amount.toStringAsFixed(0)}",
+                      style: TextStyle(
+                        color: tx.isExpense ? Colors.redAccent : Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
-                );
-              },
-              childCount: currentTxs.length,
-            ),
+                ),
+              );
+            }, childCount: currentTxs.length),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
@@ -265,7 +417,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       elevation: 2,
       child: Padding(
@@ -278,11 +430,18 @@ class _SummaryCard extends StatelessWidget {
               child: Icon(icon, color: color),
             ),
             const SizedBox(height: 12),
-            Text(title, style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7))),
+            Text(
+              title,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               '৳${amount.toStringAsFixed(0)}',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

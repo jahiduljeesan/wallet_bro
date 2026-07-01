@@ -53,4 +53,24 @@ class StatisticsProvider extends ChangeNotifier {
     }
     return {'income': income, 'expense': expense, 'net': income - expense};
   }
+
+  List<MapEntry<String, double>> getTopCategories(String yearMonth, {required bool isExpense}) {
+    final txs = getTransactionsForMonth(yearMonth).where((tx) => tx.isExpense == isExpense && tx.category != 'Transfer');
+    final Map<String, double> categoryMap = {};
+    for (var tx in txs) {
+      categoryMap[tx.category] = (categoryMap[tx.category] ?? 0) + tx.amount;
+    }
+    final sorted = categoryMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return sorted;
+  }
+
+  Map<int, double> getDailyExpenses(String yearMonth) {
+    final txs = getTransactionsForMonth(yearMonth).where((tx) => tx.isExpense && tx.category != 'Transfer');
+    final Map<int, double> daily = {};
+    for (var tx in txs) {
+      final day = tx.timestamp.day;
+      daily[day] = (daily[day] ?? 0) + tx.amount;
+    }
+    return daily;
+  }
 }

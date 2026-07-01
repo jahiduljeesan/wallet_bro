@@ -350,7 +350,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                 const SizedBox(height: 16),
               ] else if (isTransfer) ...[
                 DropdownButtonFormField<String>(
-                  value: _selectedAccountId,
+                  initialValue: _selectedAccountId,
                   decoration: InputDecoration(
                     labelText: 'From Account',
                     prefixIcon: const Icon(Icons.upload_outlined),
@@ -374,7 +374,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _targetAccountId,
+                  initialValue: _targetAccountId,
                   decoration: InputDecoration(
                     labelText: 'To Account',
                     prefixIcon: const Icon(Icons.download_outlined),
@@ -399,7 +399,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                 const SizedBox(height: 16),
               ] else ...[
                 DropdownButtonFormField<String>(
-                  value: _selectedAccountId,
+                  initialValue: _selectedAccountId,
                   decoration: InputDecoration(
                     labelText: 'Account',
                     prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
@@ -567,7 +567,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
@@ -593,7 +593,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(

@@ -8,6 +8,7 @@ import '../providers/dashboard_provider.dart';
 
 import '../../../transactions/presentation/pages/add_transaction_sheet.dart';
 import '../../../categories/presentation/widgets/category_icon.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -19,7 +20,18 @@ class DashboardPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(title: const Text('Dashboard'), elevation: 0),
+      appBar: AppBar(
+        title: const Text('Dashboard'), 
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline_rounded),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
+            },
+          )
+        ],
+      ),
       body: CustomScrollView(
         slivers: [
           // Balance Card

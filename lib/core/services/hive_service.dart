@@ -3,12 +3,16 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../features/transactions/domain/models/transaction_model.dart';
 import '../../features/accounts/domain/models/account_model.dart';
 import '../../features/categories/domain/models/category_model.dart';
+import '../../features/statistics/domain/models/monthly_summary_model.dart';
+import '../../features/debts/domain/models/debt_model.dart';
 
 class HiveService {
   static const String transactionsBoxName = 'transactions';
   static const String accountsBoxName = 'accounts';
   static const String settingsBoxName = 'settings';
   static const String categoriesBoxName = 'categories';
+  static const String monthlySummariesBoxName = 'monthly_summaries';
+  static const String debtsBoxName = 'debts';
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -23,11 +27,22 @@ class HiveService {
     if (!Hive.isAdapterRegistered(2)) {
       Hive.registerAdapter(CategoryModelAdapter());
     }
+    if (!Hive.isAdapterRegistered(3)) {
+      Hive.registerAdapter(MonthlySummaryModelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(4)) {
+      Hive.registerAdapter(DebtModelAdapter());
+    }
 
     // Open boxes
     await Hive.openBox<TransactionModel>(transactionsBoxName);
-    await Hive.openBox<AccountModel>(accountsBoxName);
+    
+    final accountsBox = await Hive.openBox<AccountModel>(accountsBoxName);
+    await _ensureDefaultAccounts(accountsBox);
+
     await Hive.openBox(settingsBoxName);
+    await Hive.openBox<MonthlySummaryModel>(monthlySummariesBoxName);
+    await Hive.openBox<DebtModel>(debtsBoxName);
     
     final categoriesBox = await Hive.openBox<CategoryModel>(categoriesBoxName);
     if (categoriesBox.isEmpty) {
@@ -39,6 +54,17 @@ class HiveService {
   static Box<AccountModel> get accountsBox => Hive.box<AccountModel>(accountsBoxName);
   static Box<CategoryModel> get categoriesBox => Hive.box<CategoryModel>(categoriesBoxName);
   static Box get settingsBox => Hive.box(settingsBoxName);
+  static Box<MonthlySummaryModel> get monthlySummariesBox => Hive.box<MonthlySummaryModel>(monthlySummariesBoxName);
+  static Box<DebtModel> get debtsBox => Hive.box<DebtModel>(debtsBoxName);
+
+  static Future<void> _ensureDefaultAccounts(Box<AccountModel> box) async {
+    if (!box.containsKey('cash_account')) {
+      await box.put('cash_account', AccountModel(id: 'cash_account', name: 'Cash', type: 'Cash', initialBalance: 0));
+    }
+    if (!box.containsKey('savings_account')) {
+      await box.put('savings_account', AccountModel(id: 'savings_account', name: 'Savings', type: 'Bank', initialBalance: 0));
+    }
+  }
 
   static Future<void> _seedCategories(Box<CategoryModel> box) async {
     final List<CategoryModel> defaults = [
@@ -77,5 +103,6 @@ class HiveService {
     await transactionsBox.clear();
     await accountsBox.clear();
     await categoriesBox.clear();
+    await debtsBox.clear();
   }
 }
