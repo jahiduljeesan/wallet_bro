@@ -30,7 +30,12 @@ class ChatProvider extends ChangeNotifier {
     if (accounts.isEmpty) return 'cash_account';
 
     final ref = accountRef.trim().toLowerCase();
-    if (ref.isEmpty) return accounts.first.id;
+    if (ref.isEmpty) {
+      if (accounts.any((acc) => acc.id == 'cash_account')) {
+        return 'cash_account';
+      }
+      return accounts.first.id;
+    }
 
     // 1. Exact ID match
     if (accounts.any((acc) => acc.id == accountRef)) {
@@ -58,7 +63,10 @@ class ChatProvider extends ChangeNotifier {
       return substringMatch.first.id;
     }
 
-    // 5. Fallback to first account
+    // 5. Fallback to cash_account, then first account
+    if (accounts.any((acc) => acc.id == 'cash_account')) {
+      return 'cash_account';
+    }
     return accounts.first.id;
   }
 

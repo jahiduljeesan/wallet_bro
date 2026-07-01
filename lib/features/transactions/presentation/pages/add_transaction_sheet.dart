@@ -183,7 +183,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
         note: _noteController.text.trim(),
         timestamp: _selectedDateTime,
         createdBy: widget.transaction?.createdBy ?? 'manual',
-        accountId: _selectedAccountId ?? 'default_account',
+        accountId: _selectedAccountId ?? 'cash_account',
         isExpense: isExpense,
       );
       provider.addTransaction(tx);

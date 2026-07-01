@@ -67,26 +67,35 @@ class MonthlyUpdateService {
     );
     await HiveService.monthlySummariesBox.put(monthId, summary);
 
-    // Calculate remaining positive balances from all non-savings accounts
-    double totalRemaining = 0;
+    // Calculate remaining positive balance of cash_account specifically
+    double cashRemaining = 0;
+    
+    // Find cash account
+    AccountModel? cashAccount;
+    try {
+      cashAccount = accounts.firstWhere((acc) => acc.id == 'cash_account');
+    } catch (_) {
+      cashAccount = AccountModel(
+        id: 'cash_account',
+        name: 'Cash',
+        type: 'Cash',
+        initialBalance: 0,
+      );
+      await HiveService.accountsBox.put(cashAccount.id, cashAccount);
+    }
 
-    for (var acc in accounts) {
-      if (acc.id == 'savings_account') continue;
-
-      double balance = acc.initialBalance;
-      for (var tx in transactions) {
-        if (tx.accountId == acc.id) {
-          if (tx.isExpense) {
-            balance -= tx.amount;
-          } else {
-            balance += tx.amount;
-          }
+    double cashBalance = cashAccount.initialBalance;
+    for (var tx in transactions) {
+      if (tx.accountId == 'cash_account') {
+        if (tx.isExpense) {
+          cashBalance -= tx.amount;
+        } else {
+          cashBalance += tx.amount;
         }
       }
-
-      if (balance > 0) {
-        totalRemaining += balance;
-      }
+    }
+    if (cashBalance > 0) {
+      cashRemaining = cashBalance;
     }
 
     // Update Savings Account Initial Balance
@@ -102,6 +111,7 @@ class MonthlyUpdateService {
         type: 'Bank',
         initialBalance: 0,
       );
+      await HiveService.accountsBox.put(savingsAccount.id, savingsAccount);
     }
 
     // Calculate current true balance of Savings
@@ -123,19 +133,39 @@ class MonthlyUpdateService {
       // Ignore backup errors
     }
 
-    // Reset all non-savings accounts to 0 initial balance
+    // Update initial balances for all accounts:
+    // - cash_account: reset to 0
+    // - savings_account: handled below
+    // - custom accounts: set to their current live balance so it carries over
     for (var acc in accounts) {
-      if (acc.id != 'savings_account') {
+      if (acc.id == 'cash_account') {
         await HiveService.accountsBox.put(
           acc.id,
           acc.copyWith(initialBalance: 0),
+        );
+      } else if (acc.id == 'savings_account') {
+        // Handled below
+      } else {
+        double customBalance = acc.initialBalance;
+        for (var tx in transactions) {
+          if (tx.accountId == acc.id) {
+            if (tx.isExpense) {
+              customBalance -= tx.amount;
+            } else {
+              customBalance += tx.amount;
+            }
+          }
+        }
+        await HiveService.accountsBox.put(
+          acc.id,
+          acc.copyWith(initialBalance: customBalance),
         );
       }
     }
 
     // Update savings account initial balance with the rollover amount
     final updatedSavings = savingsAccount.copyWith(
-      initialBalance: currentSavingsBalance + totalRemaining,
+      initialBalance: currentSavingsBalance + cashRemaining,
     );
     await HiveService.accountsBox.put(updatedSavings.id, updatedSavings);
 

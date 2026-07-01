@@ -84,12 +84,12 @@ class AccountsPage extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onLongPress: () {
-                    if (accounts.length <= 1) {
+                    if (account.id == 'cash_account' || account.id == 'savings_account') {
                       showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          title: const Text('Cannot Delete Account'),
-                          content: const Text('You must keep at least one account to record transactions.'),
+                          title: const Text('System Account'),
+                          content: Text('The "${account.name}" account is a system default and cannot be deleted.'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx),
