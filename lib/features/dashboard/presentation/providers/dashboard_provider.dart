@@ -9,7 +9,10 @@ class DashboardProvider extends ChangeNotifier {
   List<TransactionModel> get transactions => _transactions;
 
   double get totalBalance {
-    double temp = 0;
+    final accounts = HiveService.accountsBox.values;
+    double initialSum = accounts.fold(0.0, (sum, acc) => sum + acc.initialBalance);
+    
+    double temp = initialSum;
     for (var tx in _transactions) {
       if (tx.isExpense) {
         temp -= tx.amount;
@@ -69,6 +72,9 @@ class DashboardProvider extends ChangeNotifier {
     // Listen to Hive box changes
     HiveService.transactionsBox.listenable().addListener(() {
       _loadTransactions();
+    });
+    HiveService.accountsBox.listenable().addListener(() {
+      notifyListeners();
     });
   }
 

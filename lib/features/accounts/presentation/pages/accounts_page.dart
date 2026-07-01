@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/accounts_provider.dart';
 import 'add_account_sheet.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class AccountsPage extends StatelessWidget {
   const AccountsPage({super.key});
@@ -83,6 +84,22 @@ class AccountsPage extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onLongPress: () {
+                    if (accounts.length <= 1) {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Cannot Delete Account'),
+                          content: const Text('You must keep at least one account to record transactions.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
                     // Quick delete option
                     showDialog(
                       context: context,
@@ -141,7 +158,7 @@ class AccountsPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '\$${liveBalance.toStringAsFixed(2)}',
+                              CurrencyFormatter.format(liveBalance, showDecimals: true),
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: liveBalance < 0 ? theme.colorScheme.error : theme.colorScheme.onSurface,
