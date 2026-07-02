@@ -5,7 +5,8 @@ import '../../domain/models/account_model.dart';
 import 'dart:math';
 
 class AddAccountSheet extends StatefulWidget {
-  const AddAccountSheet({super.key});
+  final AccountModel? account;
+  const AddAccountSheet({super.key, this.account});
 
   @override
   State<AddAccountSheet> createState() => _AddAccountSheetState();
@@ -15,6 +16,19 @@ class _AddAccountSheetState extends State<AddAccountSheet> {
   final _nameController = TextEditingController();
   final _balanceController = TextEditingController();
   String _selectedType = 'Bank'; // Bank, Cash, Mobile
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.account != null) {
+      _nameController.text = widget.account!.name;
+      _balanceController.text = widget.account!.initialBalance.toString();
+      _selectedType = widget.account!.type;
+      if (!['Bank', 'Cash', 'Mobile', 'Saving'].contains(_selectedType)) {
+         _selectedType = 'Bank';
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -27,14 +41,26 @@ class _AddAccountSheetState extends State<AddAccountSheet> {
     if (_nameController.text.trim().isEmpty) return;
     
     final balance = double.tryParse(_balanceController.text.trim()) ?? 0.0;
-    final account = AccountModel(
-      id: "acc_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(100)}",
-      name: _nameController.text.trim(),
-      type: _selectedType,
-      initialBalance: balance,
-    );
+    final provider = Provider.of<AccountsProvider>(context, listen: false);
 
-    Provider.of<AccountsProvider>(context, listen: false).addAccount(account);
+    if (widget.account != null) {
+      final account = widget.account!.copyWith(
+        name: _nameController.text.trim(),
+        type: _selectedType,
+        initialBalance: balance,
+      );
+      provider.updateAccount(account);
+    } else {
+      final account = AccountModel(
+        id: "acc_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(100)}",
+        name: _nameController.text.trim(),
+        type: _selectedType,
+        initialBalance: balance,
+        order: provider.accounts.length,
+      );
+      provider.addAccount(account);
+    }
+    
     Navigator.pop(context);
   }
 
@@ -54,7 +80,7 @@ class _AddAccountSheetState extends State<AddAccountSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Add New Account',
+            widget.account != null ? 'Edit Account' : 'Add New Account',
             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),

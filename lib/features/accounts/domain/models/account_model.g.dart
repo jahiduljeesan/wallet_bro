@@ -21,13 +21,14 @@ class AccountModelAdapter extends TypeAdapter<AccountModel> {
       name: fields[1] as String,
       type: fields[2] as String,
       initialBalance: fields[3] as double,
+      order: fields[4] == null ? 0 : fields[4] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, AccountModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class AccountModelAdapter extends TypeAdapter<AccountModel> {
       ..writeByte(2)
       ..write(obj.type)
       ..writeByte(3)
-      ..write(obj.initialBalance);
+      ..write(obj.initialBalance)
+      ..writeByte(4)
+      ..write(obj.order);
   }
 
   @override

@@ -66,59 +66,46 @@ class AccountsPage extends StatelessWidget {
             );
           }
 
-          return ListView.separated(
+          return ReorderableListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: accounts.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            buildDefaultDragHandles: false,
+            onReorder: (oldIndex, newIndex) {
+              accountsProvider.reorderAccounts(oldIndex, newIndex);
+            },
+            proxyDecorator: (Widget child, int index, Animation<double> animation) {
+              return Material(
+                color: Colors.transparent,
+                child: child,
+              );
+            },
             itemBuilder: (context, index) {
               final account = accounts[index];
               final liveBalance = accountsProvider.getAccountBalance(account.id);
 
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
-                ),
-                color: theme.colorScheme.surface,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onLongPress: () {
-                    if (account.id == 'cash_account' || account.id == 'savings_account') {
-                      showDialog(
+              return Padding(
+                key: ValueKey(account.id),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+                  ),
+                  color: theme.colorScheme.surface,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      showModalBottomSheet(
                         context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('System Account'),
-                          content: Text('The "${account.name}" account is a system default and cannot be deleted.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('OK'),
-                            ),
-                          ],
+                        isScrollControlled: true,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                         ),
+                        builder: (context) => AddAccountSheet(account: account),
                       );
-                      return;
-                    }
-                    // Quick delete option
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Delete Account'),
-                        content: Text('Are you sure you want to delete ${account.name}?'),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                          TextButton(
-                            onPressed: () {
-                              accountsProvider.deleteAccount(account.id);
-                              Navigator.pop(ctx);
-                            },
-                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                    },
+                    // Empty since we use onTap for edit and PopupMenu for edit/delete
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Row(
@@ -166,9 +153,83 @@ class AccountsPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(width: 8),
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                          onSelected: (value) {
+                            if (value == 'edit') {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                ),
+                                builder: (context) => AddAccountSheet(account: account),
+                              );
+                            } else if (value == 'delete') {
+                              if (account.id == 'cash_account' || account.id == 'savings_account') {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('System Account'),
+                                    content: Text('The "${account.name}" account is a system default and cannot be deleted.'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete Account'),
+                                    content: Text('Are you sure you want to delete ${account.name}?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                      TextButton(
+                                        onPressed: () {
+                                          accountsProvider.deleteAccount(account.id);
+                                          Navigator.pop(ctx);
+                                        },
+                                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Edit'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete, color: Colors.red, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Delete', style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        ReorderableDragStartListener(
+                          index: index,
+                          child: Icon(Icons.drag_handle, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                        ),
                       ],
                     ),
                   ),
+                ),
                 ),
               );
             },

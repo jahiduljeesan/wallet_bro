@@ -26,6 +26,39 @@ class AccountsProvider extends ChangeNotifier {
   void _loadAccounts() {
     final box = HiveService.accountsBox;
     _accounts = box.values.toList();
+    
+    // Migration for order field if everything is 0
+    if (_accounts.isNotEmpty && _accounts.every((a) => a.order == 0)) {
+      int nextOrder = 2;
+      for (int i = 0; i < _accounts.length; i++) {
+        var acc = _accounts[i];
+        if (acc.id == 'cash_account') {
+          _accounts[i] = acc.copyWith(order: 0);
+        } else if (acc.id == 'savings_account') {
+          _accounts[i] = acc.copyWith(order: 1);
+        } else {
+          _accounts[i] = acc.copyWith(order: nextOrder++);
+        }
+        HiveService.accountsBox.put(_accounts[i].id, _accounts[i]);
+      }
+    }
+    
+    _accounts.sort((a, b) => a.order.compareTo(b.order));
+    notifyListeners();
+  }
+
+  void reorderAccounts(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final account = _accounts.removeAt(oldIndex);
+    _accounts.insert(newIndex, account);
+    
+    // Update all orders and save to Hive silently (avoiding infinite loop if we listen to box)
+    for (int i = 0; i < _accounts.length; i++) {
+      _accounts[i] = _accounts[i].copyWith(order: i);
+      HiveService.accountsBox.put(_accounts[i].id, _accounts[i]);
+    }
     notifyListeners();
   }
 

@@ -16,11 +16,15 @@ class AccountModel extends HiveObject {
   @HiveField(3)
   final double initialBalance;
 
+  @HiveField(4, defaultValue: 0)
+  final int order;
+
   AccountModel({
     required this.id,
     required this.name,
     required this.type,
     this.initialBalance = 0.0,
+    this.order = 0,
   });
 
   AccountModel copyWith({
@@ -28,12 +32,14 @@ class AccountModel extends HiveObject {
     String? name,
     String? type,
     double? initialBalance,
+    int? order,
   }) {
     return AccountModel(
       id: id ?? this.id,
       name: name ?? this.name,
       type: type ?? this.type,
       initialBalance: initialBalance ?? this.initialBalance,
+      order: order ?? this.order,
     );
   }
 
@@ -43,6 +49,7 @@ class AccountModel extends HiveObject {
       name: json['name'],
       type: json['type'],
       initialBalance: (json['initialBalance'] as num?)?.toDouble() ?? 0.0,
+      order: json['order'] as int? ?? 0,
     );
   }
 
@@ -52,6 +59,7 @@ class AccountModel extends HiveObject {
       'name': name,
       'type': type,
       'initialBalance': initialBalance,
+      'order': order,
     };
   }
 }
