@@ -5,6 +5,7 @@ import '../../features/accounts/domain/models/account_model.dart';
 import '../../features/categories/domain/models/category_model.dart';
 import '../../features/statistics/domain/models/monthly_summary_model.dart';
 import '../../features/debts/domain/models/debt_model.dart';
+import '../../features/budget/domain/models/budget_model.dart';
 
 class HiveService {
   static const String transactionsBoxName = 'transactions';
@@ -13,6 +14,7 @@ class HiveService {
   static const String categoriesBoxName = 'categories';
   static const String monthlySummariesBoxName = 'monthly_summaries';
   static const String debtsBoxName = 'debts';
+  static const String budgetsBoxName = 'budgets';
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -33,6 +35,9 @@ class HiveService {
     if (!Hive.isAdapterRegistered(4)) {
       Hive.registerAdapter(DebtModelAdapter());
     }
+    if (!Hive.isAdapterRegistered(5)) {
+      Hive.registerAdapter(BudgetModelAdapter());
+    }
 
     // Open boxes
     await Hive.openBox<TransactionModel>(transactionsBoxName);
@@ -43,6 +48,7 @@ class HiveService {
     await Hive.openBox(settingsBoxName);
     await Hive.openBox<MonthlySummaryModel>(monthlySummariesBoxName);
     await Hive.openBox<DebtModel>(debtsBoxName);
+    await Hive.openBox<BudgetModel>(budgetsBoxName);
     
     final categoriesBox = await Hive.openBox<CategoryModel>(categoriesBoxName);
     if (categoriesBox.isEmpty) {
@@ -56,6 +62,7 @@ class HiveService {
   static Box get settingsBox => Hive.box(settingsBoxName);
   static Box<MonthlySummaryModel> get monthlySummariesBox => Hive.box<MonthlySummaryModel>(monthlySummariesBoxName);
   static Box<DebtModel> get debtsBox => Hive.box<DebtModel>(debtsBoxName);
+  static Box<BudgetModel> get budgetsBox => Hive.box<BudgetModel>(budgetsBoxName);
 
   static Future<void> _ensureDefaultAccounts(Box<AccountModel> box) async {
     if (!box.containsKey('cash_account')) {
@@ -104,5 +111,6 @@ class HiveService {
     await accountsBox.clear();
     await categoriesBox.clear();
     await debtsBox.clear();
+    await budgetsBox.clear();
   }
 }

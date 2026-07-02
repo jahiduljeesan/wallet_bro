@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/services/hive_service.dart';
+import '../../../../core/services/widget_service.dart';
 import '../../domain/models/account_model.dart';
 
 class AccountsProvider extends ChangeNotifier {
@@ -13,10 +14,12 @@ class AccountsProvider extends ChangeNotifier {
     // Listen to Hive box changes
     HiveService.accountsBox.listenable().addListener(() {
       _loadAccounts();
+      WidgetService.updateHomeWidget();
     });
     // Also listen to transactions box, because account balance depends on transactions
     HiveService.transactionsBox.listenable().addListener(() {
       notifyListeners(); // Just notify to recalculate balances on the UI
+      WidgetService.updateHomeWidget();
     });
   }
 

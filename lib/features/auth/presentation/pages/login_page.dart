@@ -30,7 +30,7 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               Text(
-                'Wallet Bro',
+                'Wallet Buddy',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.bold,

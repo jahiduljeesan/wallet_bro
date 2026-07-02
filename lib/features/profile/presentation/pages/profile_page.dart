@@ -4,6 +4,7 @@ import '../../../../core/theme/theme_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/presentation/pages/category_management_page.dart';
 import 'backup_page.dart';
+import '../../../budget/presentation/pages/budget_management_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -81,6 +82,19 @@ class ProfilePage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const CategoryManagementPage(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.account_balance_wallet_outlined),
+                  title: const Text('Manage Budgets', style: TextStyle(fontWeight: FontWeight.w500)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BudgetManagementPage(),
                       ),
                     );
                   },

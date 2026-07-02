@@ -39,26 +39,7 @@ class _AIChatViewState extends State<AIChatView> {
     }
   }
 
-  Widget _buildSuggestionChip(BuildContext context, ChatProvider provider, String label, String command) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: ActionChip(
-        label: Text(label),
-        labelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: theme.colorScheme.primary,
-        ),
-        backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.25),
-        side: BorderSide.none,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        onPressed: () {
-          provider.sendMessage(command);
-        },
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -190,27 +171,7 @@ class _AIChatViewState extends State<AIChatView> {
               ),
             ),
           
-          // Quick suggestion chips
-          Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border(
-                top: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.2), width: 1),
-              ),
-            ),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              children: [
-                _buildSuggestionChip(context, provider, '🍔 Spent ৳150 Meal', 'Spent 150 on meal'),
-                _buildSuggestionChip(context, provider, '🚗 Spent ৳500 Travel', 'Spent 500 on travel'),
-                _buildSuggestionChip(context, provider, '💵 Add ৳1000 Cash', 'Add 1000 taka income to Cash'),
-                _buildSuggestionChip(context, provider, '🏦 Add ৳2000 Savings', 'Add 2000 taka income to Savings'),
-                _buildSuggestionChip(context, provider, '🔄 Transfer ৳1000 to Savings', 'Transfer 1000 from Cash to Savings'),
-              ],
-            ),
-          ),
+
 
           // Input Area
           Container(

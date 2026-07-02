@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/services/hive_service.dart';
 import 'core/services/monthly_update_service.dart';
+import 'core/services/widget_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -11,6 +12,7 @@ import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'features/accounts/presentation/providers/accounts_provider.dart';
 import 'features/categories/presentation/providers/category_provider.dart';
 import 'features/debts/presentation/providers/debt_provider.dart';
+import 'features/budget/presentation/providers/budget_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,9 @@ void main() async {
   // Check and run monthly update
   await MonthlyUpdateService.checkAndRunMonthlyUpdate();
 
+  // Update home widget on startup
+  await WidgetService.updateHomeWidget();
+
   runApp(const WalletBroApp());
 }
 
@@ -44,6 +49,7 @@ class WalletBroApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AccountsProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => DebtProvider()),
+        ChangeNotifierProvider(create: (_) => BudgetProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
