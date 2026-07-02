@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/chat_provider.dart';
+import '../../../accounts/presentation/providers/accounts_provider.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class AIChatPage extends StatelessWidget {
   const AIChatPage({super.key});
@@ -37,6 +39,27 @@ class _AIChatViewState extends State<AIChatView> {
     }
   }
 
+  Widget _buildSuggestionChip(BuildContext context, ChatProvider provider, String label, String command) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: ActionChip(
+        label: Text(label),
+        labelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+        backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.25),
+        side: BorderSide.none,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onPressed: () {
+          provider.sendMessage(command);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -53,6 +76,83 @@ class _AIChatViewState extends State<AIChatView> {
       ),
       body: Column(
         children: [
+          // Live Remaining Balances Bar
+          Consumer<AccountsProvider>(
+            builder: (context, accountsProvider, child) {
+              final cashBalance = accountsProvider.getAccountBalance('cash_account');
+              final savingsBalance = accountsProvider.getAccountBalance('savings_account');
+              
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.15),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                            child: Icon(Icons.money_outlined, size: 16, color: theme.colorScheme.primary),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Cash Balance', 
+                                style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor, fontWeight: FontWeight.bold)
+                              ),
+                              Text(
+                                CurrencyFormatter.format(cashBalance), 
+                                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(width: 1, height: 28, color: theme.colorScheme.outlineVariant.withOpacity(0.3)),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.green.withOpacity(0.1),
+                            child: const Icon(Icons.savings_outlined, size: 16, color: Colors.green),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Savings Balance', 
+                                style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor, fontWeight: FontWeight.bold)
+                              ),
+                              Text(
+                                CurrencyFormatter.format(savingsBalance), 
+                                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -90,6 +190,28 @@ class _AIChatViewState extends State<AIChatView> {
               ),
             ),
           
+          // Quick suggestion chips
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border(
+                top: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.2), width: 1),
+              ),
+            ),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              children: [
+                _buildSuggestionChip(context, provider, '🍔 Spent ৳150 Meal', 'Spent 150 on meal'),
+                _buildSuggestionChip(context, provider, '🚗 Spent ৳500 Travel', 'Spent 500 on travel'),
+                _buildSuggestionChip(context, provider, '💵 Add ৳1000 Cash', 'Add 1000 taka income to Cash'),
+                _buildSuggestionChip(context, provider, '🏦 Add ৳2000 Savings', 'Add 2000 taka income to Savings'),
+                _buildSuggestionChip(context, provider, '🔄 Transfer ৳1000 to Savings', 'Transfer 1000 from Cash to Savings'),
+              ],
+            ),
+          ),
+
           // Input Area
           Container(
             padding: const EdgeInsets.all(16),

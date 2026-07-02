@@ -9,15 +9,17 @@ class DashboardProvider extends ChangeNotifier {
   List<TransactionModel> get transactions => _transactions;
 
   double get totalBalance {
-    final accounts = HiveService.accountsBox.values;
-    double initialSum = accounts.fold(0.0, (sum, acc) => sum + acc.initialBalance);
+    final cashAccount = HiveService.accountsBox.get('cash_account');
+    if (cashAccount == null) return 0.0;
     
-    double temp = initialSum;
+    double temp = cashAccount.initialBalance;
     for (var tx in _transactions) {
-      if (tx.isExpense) {
-        temp -= tx.amount;
-      } else {
-        temp += tx.amount;
+      if (tx.accountId == 'cash_account') {
+        if (tx.isExpense) {
+          temp -= tx.amount;
+        } else {
+          temp += tx.amount;
+        }
       }
     }
     return temp;
@@ -26,14 +28,14 @@ class DashboardProvider extends ChangeNotifier {
   double get currentMonthIncome {
     final now = DateTime.now();
     return _transactions
-        .where((tx) => !tx.isExpense && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
+        .where((tx) => !tx.isExpense && tx.accountId == 'cash_account' && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
         .fold(0.0, (sum, tx) => sum + tx.amount);
   }
 
   double get currentMonthExpense {
     final now = DateTime.now();
     return _transactions
-        .where((tx) => tx.isExpense && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
+        .where((tx) => tx.isExpense && tx.accountId == 'cash_account' && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
         .fold(0.0, (sum, tx) => sum + tx.amount);
   }
 

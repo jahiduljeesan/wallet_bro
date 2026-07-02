@@ -248,7 +248,7 @@ class BalanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Total Balance',
+            'Cash Balance',
             style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 8),
