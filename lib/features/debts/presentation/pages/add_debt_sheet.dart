@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../providers/debt_provider.dart';
 
+import '../../domain/models/debt_model.dart';
+
 class AddDebtSheet extends StatefulWidget {
   final DebtProvider provider;
+  final DebtModel? debt;
 
-  const AddDebtSheet({super.key, required this.provider});
+  const AddDebtSheet({super.key, required this.provider, this.debt});
 
   @override
   State<AddDebtSheet> createState() => _AddDebtSheetState();
@@ -17,10 +20,22 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
   String _note = '';
   bool _isDebt = true; // Default to "I Owe"
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.debt != null) {
+      _personName = widget.debt!.personName;
+      _amount = widget.debt!.amount;
+      _note = widget.debt!.note;
+      _isDebt = widget.debt!.isDebt;
+    }
+  }
+
   void _save() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       await widget.provider.addDebt(
+        id: widget.debt?.id,
         personName: _personName,
         amount: _amount,
         isDebt: _isDebt,
@@ -51,7 +66,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Add Record',
+                widget.debt != null ? 'Edit Record' : 'Add Record',
                 style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
@@ -82,6 +97,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                initialValue: _personName,
                 decoration: const InputDecoration(
                   labelText: 'Person Name',
                   border: OutlineInputBorder(),
@@ -92,6 +108,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                initialValue: widget.debt != null ? _amount.toString() : null,
                 decoration: const InputDecoration(
                   labelText: 'Amount (৳)',
                   border: OutlineInputBorder(),
@@ -107,6 +124,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                initialValue: _note,
                 decoration: const InputDecoration(
                   labelText: 'Note (Optional)',
                   border: OutlineInputBorder(),

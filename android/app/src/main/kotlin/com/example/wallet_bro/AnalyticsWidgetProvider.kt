@@ -14,9 +14,13 @@ class AnalyticsWidgetProvider : HomeWidgetProvider() {
                 // Get data from SharedPreferences (set by Flutter HomeWidget plugin)
                 val income = widgetData.getString("monthly_income", "৳0")
                 val expense = widgetData.getString("monthly_expense", "৳0")
+                val budgetText = widgetData.getString("monthly_budget_text", "৳0 / ৳0")
+                val budgetProgress = widgetData.getInt("monthly_budget_progress", 0)
 
                 setTextViewText(R.id.widget_income, income)
                 setTextViewText(R.id.widget_expense, expense)
+                setTextViewText(R.id.widget_budget_text, budgetText)
+                setProgressBar(R.id.widget_budget_progress, 100, budgetProgress, false)
 
                 // PendingIntent to launch the main app
                 val pendingIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java)

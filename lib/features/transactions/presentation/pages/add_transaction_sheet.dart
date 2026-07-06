@@ -63,8 +63,15 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       isTransfer = tx.category == 'Transfer';
     } else {
       if (accounts.isNotEmpty) {
-        _selectedAccountId = accounts.first.id;
-        if (accounts.length > 1) {
+        final cashAccount = accounts.firstWhere(
+            (acc) => acc.name.toLowerCase().contains('cash') || acc.id == 'cash_account',
+            orElse: () => accounts.first);
+        _selectedAccountId = cashAccount.id;
+        
+        final otherAccounts = accounts.where((acc) => acc.id != cashAccount.id).toList();
+        if (otherAccounts.isNotEmpty) {
+          _targetAccountId = otherAccounts.first.id;
+        } else if (accounts.length > 1) {
           _targetAccountId = accounts[1].id;
         }
       }
@@ -215,7 +222,14 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accountsProvider = Provider.of<AccountsProvider>(context);
-    final accounts = accountsProvider.accounts;
+    final accounts = accountsProvider.accounts.toList();
+    accounts.sort((a, b) {
+      final aIsCash = a.name.toLowerCase().contains('cash') || a.id == 'cash_account';
+      final bIsCash = b.name.toLowerCase().contains('cash') || b.id == 'cash_account';
+      if (aIsCash && !bIsCash) return -1;
+      if (!aIsCash && bIsCash) return 1;
+      return 0;
+    });
 
     // Dynamically validate that selected IDs exist in the active accounts list
     if (_selectedAccountId != null && !accounts.any((acc) => acc.id == _selectedAccountId)) {
@@ -482,6 +496,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                           }
 
                           final cat = cats[index];
+                          final hasSelection = _categoryController.text.isNotEmpty;
                           final isSelected = _categoryController.text.toLowerCase() == cat.name.toLowerCase();
 
                           return Padding(
@@ -508,29 +523,32 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                   ),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CategoryIcon(
-                                      categoryName: cat.name,
-                                      isExpense: cat.isExpense,
-                                      size: 32,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                      child: Text(
-                                        cat.name,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                child: Opacity(
+                                  opacity: (!hasSelection || isSelected) ? 1.0 : 0.4,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CategoryIcon(
+                                        categoryName: cat.name,
+                                        isExpense: cat.isExpense,
+                                        size: 32,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 8),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                        child: Text(
+                                          cat.name,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

@@ -5,6 +5,7 @@ import '../../features/accounts/domain/models/account_model.dart';
 import '../../features/categories/domain/models/category_model.dart';
 import '../../features/statistics/domain/models/monthly_summary_model.dart';
 import '../../features/debts/domain/models/debt_model.dart';
+import '../../features/debts/domain/models/debt_payment_model.dart';
 import '../../features/budget/domain/models/budget_model.dart';
 
 class HiveService {
@@ -37,6 +38,9 @@ class HiveService {
     }
     if (!Hive.isAdapterRegistered(5)) {
       Hive.registerAdapter(BudgetModelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(6)) {
+      Hive.registerAdapter(DebtPaymentModelAdapter());
     }
 
     // Open boxes

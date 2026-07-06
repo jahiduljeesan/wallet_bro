@@ -43,8 +43,34 @@ class WidgetService {
         }
       }
 
+      // --- Budget Update ---
+      double totalBudget = 0.0;
+      double totalBudgetSpent = 0.0;
+      
+      final activeBudgets = HiveService.budgetsBox.values.where((b) => b.amount > 0).toList();
+      for (var budget in activeBudgets) {
+        totalBudget += budget.amount;
+        
+        final category = HiveService.categoriesBox.get(budget.categoryId);
+        final categoryName = category?.name ?? budget.categoryId;
+
+        // Calculate spent for this budget category
+        for (var tx in HiveService.transactionsBox.values) {
+          if (tx.category == categoryName && 
+              tx.isExpense &&
+              tx.timestamp.year == now.year &&
+              tx.timestamp.month == now.month) {
+            totalBudgetSpent += tx.amount;
+          }
+        }
+      }
+
+      int budgetProgress = totalBudget > 0 ? ((totalBudgetSpent / totalBudget).clamp(0.0, 1.0) * 100).toInt() : 0;
+
       await HomeWidget.saveWidgetData<String>('monthly_income', CurrencyFormatter.format(income));
       await HomeWidget.saveWidgetData<String>('monthly_expense', CurrencyFormatter.format(expense));
+      await HomeWidget.saveWidgetData<String>('monthly_budget_text', '৳${totalBudgetSpent.toStringAsFixed(0)} / ৳${totalBudget.toStringAsFixed(0)}');
+      await HomeWidget.saveWidgetData<int>('monthly_budget_progress', budgetProgress);
       await HomeWidget.updateWidget(
         name: 'AnalyticsWidgetProvider',
         androidName: 'AnalyticsWidgetProvider',

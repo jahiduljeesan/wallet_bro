@@ -63,8 +63,11 @@ class BudgetProvider with ChangeNotifier {
 
   double getSpentAmount(String categoryId, DateTime month) {
     double spent = 0.0;
+    final category = HiveService.categoriesBox.get(categoryId);
+    final categoryName = category?.name ?? categoryId;
+
     for (var tx in _transactionsBox.values) {
-      if (tx.category == categoryId && 
+      if (tx.category == categoryName && 
           tx.isExpense &&
           tx.timestamp.year == month.year &&
           tx.timestamp.month == month.month) {

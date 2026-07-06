@@ -11,6 +11,7 @@ import '../../../categories/presentation/widgets/category_icon.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../budget/presentation/providers/budget_provider.dart';
 import '../../../categories/presentation/providers/category_provider.dart';
+import '../../../transactions/domain/models/transaction_model.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -112,93 +113,156 @@ class DashboardPage extends StatelessWidget {
           ),
 
           // Transactions List
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (provider.transactions.isEmpty) {
-                  return const Padding(
+          Builder(
+            builder: (context) {
+              if (provider.transactions.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Padding(
                     padding: EdgeInsets.all(32.0),
                     child: Center(
                       child: Text('No transactions yet. Start adding!'),
                     ),
-                  );
-                }
-
-                final tx = provider.transactions[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 4.0,
                   ),
-                  child: Dismissible(
-                    key: ValueKey(tx.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(Icons.delete_outline, color: Colors.white),
-                    ),
-                    onDismissed: (direction) {
-                      provider.deleteTransaction(tx.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Transaction deleted'),
-                          backgroundColor: Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
+                );
+              }
+
+              final groupedTx = provider.groupedTransactions;
+              final List<dynamic> listItems = [];
+              final sortedDates = groupedTx.keys.toList()..sort((a, b) => b.compareTo(a));
+              
+              for (var date in sortedDates) {
+                listItems.add(date);
+                listItems.addAll(groupedTx[date]!);
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = listItems[index];
+
+                    if (item is DateTime) {
+                      // Date Header
+                      final dailyTotal = provider.getDailyTotal(item);
+                      final isToday = DateTime.now().year == item.year &&
+                          DateTime.now().month == item.month &&
+                          DateTime.now().day == item.day;
+                      final isYesterday = DateTime.now().subtract(const Duration(days: 1)).year == item.year &&
+                          DateTime.now().subtract(const Duration(days: 1)).month == item.month &&
+                          DateTime.now().subtract(const Duration(days: 1)).day == item.day;
+                      
+                      String dateText = DateFormat('MMM dd, yyyy').format(item);
+                      if (isToday) dateText = 'Today, $dateText';
+                      if (isYesterday) dateText = 'Yesterday, $dateText';
+
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              dateText,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            Text(
+                              'Total: ${CurrencyFormatter.formatWithSign(dailyTotal.abs(), dailyTotal < 0)}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: dailyTotal < 0 ? Colors.redAccent : Colors.green,
+                              ),
+                            ),
+                          ],
                         ),
                       );
-                    },
-                    child: Card(
-                      elevation: 0,
-                      color: theme.colorScheme.surface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                    }
+
+                    // Transaction Item
+                    final tx = item as TransactionModel;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 4.0,
                       ),
-                      child: ListTile(
-                        onTap: () => AddTransactionSheet.show(context, transaction: tx),
-                        leading: CircleAvatar(
-                          backgroundColor: tx.isExpense
-                              ? Colors.redAccent.withOpacity(0.1)
-                              : Colors.greenAccent.withOpacity(0.1),
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: CategoryIcon(
-                              categoryName: tx.category,
-                              isExpense: tx.isExpense,
-                              size: 24,
+                      child: Dismissible(
+                        key: ValueKey(tx.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.delete_outline, color: Colors.white),
+                        ),
+                        onDismissed: (direction) {
+                          provider.deleteTransaction(tx.id);
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Transaction deleted'),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 3),
+                              action: SnackBarAction(
+                                label: 'UNDO',
+                                textColor: Colors.white,
+                                onPressed: () {
+                                  provider.addTransaction(tx);
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 0,
+                          color: theme.colorScheme.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ListTile(
+                            onTap: () => AddTransactionSheet.show(context, transaction: tx),
+                            leading: CircleAvatar(
+                              backgroundColor: tx.isExpense
+                                  ? Colors.redAccent.withOpacity(0.1)
+                                  : Colors.greenAccent.withOpacity(0.1),
+                              child: Padding(
+                                padding: const EdgeInsets.all(6.0),
+                                child: CategoryIcon(
+                                  categoryName: tx.category,
+                                  isExpense: tx.isExpense,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              tx.category,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              tx.note.isNotEmpty
+                                  ? tx.note
+                                  : DateFormat.jm().format(tx.timestamp),
+                            ),
+                            trailing: Text(
+                              CurrencyFormatter.formatWithSign(tx.amount, tx.isExpense),
+                              style: TextStyle(
+                                color: tx.isExpense ? Colors.redAccent : Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
-                        title: Text(
-                          tx.category,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          tx.note.isNotEmpty
-                              ? tx.note
-                              : tx.timestamp.toString().substring(0, 10),
-                        ),
-                        trailing: Text(
-                          CurrencyFormatter.formatWithSign(tx.amount, tx.isExpense),
-                          style: TextStyle(
-                            color: tx.isExpense ? Colors.redAccent : Colors.green,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
                       ),
-                    ),
-                  ),
-                ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.2, end: 0);
-              },
-              childCount: provider.transactions.isEmpty
-                  ? 1
-                  : provider.transactions.length,
-            ),
+                    ).animate(delay: (index > 15 ? 0 : index * 30).ms).fadeIn().slideX(begin: 0.2, end: 0);
+                  },
+                  childCount: listItems.length,
+                ),
+              );
+            },
           ),
 
           const SliverToBoxAdapter(
@@ -435,8 +499,13 @@ class CategoryPieChart extends StatelessWidget {
                         return PieChartSectionData(
                           color: colors[index % colors.length],
                           value: entry.value,
-                          title: '',
-                          radius: 35,
+                          title: CurrencyFormatter.format(entry.value, showDecimals: false),
+                          titleStyle: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          radius: 45,
                         );
                       }).toList(),
                     ),
@@ -542,6 +611,113 @@ class BudgetProgressSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        Builder(
+          builder: (context) {
+            double totalBudget = 0.0;
+            double totalSpent = 0.0;
+            final now = DateTime.now();
+
+            for (var budget in activeBudgets) {
+              totalBudget += budget.amount;
+              totalSpent += budgetProvider.getSpentAmount(budget.categoryId, now);
+            }
+
+            final totalProgress = totalBudget > 0 ? (totalSpent / totalBudget).clamp(0.0, 1.0) : 0.0;
+            final isTotalExceeded = totalSpent > totalBudget;
+            final totalRemaining = totalBudget - totalSpent;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primaryContainer,
+                    theme.colorScheme.primary.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.account_balance_wallet_rounded, color: theme.colorScheme.primary, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Monthly Limit',
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '৳${totalSpent.toStringAsFixed(0)} / ৳${totalBudget.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isTotalExceeded ? Colors.redAccent : theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: totalProgress,
+                      minHeight: 12,
+                      backgroundColor: theme.colorScheme.surfaceVariant,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isTotalExceeded ? Colors.redAccent : (totalProgress > 0.8 ? Colors.orangeAccent : theme.colorScheme.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${(totalProgress * 100).toStringAsFixed(1)}% Used',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      Text(
+                        isTotalExceeded ? 'Exceeded by ৳${(-totalRemaining).toStringAsFixed(0)}' : '৳${totalRemaining.toStringAsFixed(0)} remaining',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isTotalExceeded ? Colors.redAccent : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         ...activeBudgets.map((budget) {
           final category = categoryProvider.expenseCategories.cast<dynamic>().firstWhere(
             (c) => c.id == budget.categoryId, 

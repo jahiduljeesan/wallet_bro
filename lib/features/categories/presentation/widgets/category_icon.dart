@@ -33,7 +33,16 @@ class CategoryIcon extends StatelessWidget {
       ),
     );
 
-    // If category has a custom image path
+    // Prefer Material Icon if available for uniform theme match
+    if (cat.iconCodePoint != null) {
+      return Icon(
+        getIconDataFromCodePoint(cat.iconCodePoint!),
+        size: size,
+        color: color ?? Theme.of(context).colorScheme.primary,
+      );
+    }
+
+    // Fallback to custom image path
     if (cat.iconPath != null) {
       if (cat.iconPath!.startsWith('assets/')) {
         return Image.asset(
@@ -58,14 +67,7 @@ class CategoryIcon extends StatelessWidget {
       }
     }
 
-    // Else if category has a Material Icon codePoint
-    if (cat.iconCodePoint != null) {
-      return Icon(
-        getIconDataFromCodePoint(cat.iconCodePoint!),
-        size: size,
-        color: color ?? Theme.of(context).colorScheme.primary,
-      );
-    }
+
 
     // Fallback if everything else fails
     return Icon(

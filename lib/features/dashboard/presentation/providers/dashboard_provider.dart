@@ -28,20 +28,20 @@ class DashboardProvider extends ChangeNotifier {
   double get currentMonthIncome {
     final now = DateTime.now();
     return _transactions
-        .where((tx) => !tx.isExpense && tx.accountId == 'cash_account' && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
+        .where((tx) => !tx.isExpense && tx.category != 'Transfer' && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
         .fold(0.0, (sum, tx) => sum + tx.amount);
   }
 
   double get currentMonthExpense {
     final now = DateTime.now();
     return _transactions
-        .where((tx) => tx.isExpense && tx.accountId == 'cash_account' && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
+        .where((tx) => tx.isExpense && tx.category != 'Transfer' && tx.timestamp.year == now.year && tx.timestamp.month == now.month)
         .fold(0.0, (sum, tx) => sum + tx.amount);
   }
 
   Map<String, double> getCategoryData() {
     final Map<String, double> data = {};
-    for (var tx in _transactions.where((t) => t.isExpense)) {
+    for (var tx in _transactions.where((t) => t.isExpense && t.category != 'Transfer')) {
       data[tx.category] = (data[tx.category] ?? 0) + tx.amount;
     }
     return data;
@@ -53,7 +53,7 @@ class DashboardProvider extends ChangeNotifier {
     
     final Map<DateTime, double> data = {for (var date in last7Days) date: 0.0};
     
-    for (var tx in _transactions.where((t) => t.isExpense)) {
+    for (var tx in _transactions.where((t) => t.isExpense && t.category != 'Transfer')) {
       final txDate = DateTime(tx.timestamp.year, tx.timestamp.month, tx.timestamp.day);
       if (data.containsKey(txDate)) {
         data[txDate] = data[txDate]! + tx.amount;
@@ -66,6 +66,25 @@ class DashboardProvider extends ChangeNotifier {
     final catData = getCategoryData();
     if (catData.isEmpty) return 'N/A';
     return catData.entries.fold(catData.entries.first, (a, b) => a.value > b.value ? a : b).key;
+  }
+
+  Map<DateTime, List<TransactionModel>> get groupedTransactions {
+    final Map<DateTime, List<TransactionModel>> grouped = {};
+    for (var tx in _transactions) {
+      final date = DateTime(tx.timestamp.year, tx.timestamp.month, tx.timestamp.day);
+      if (!grouped.containsKey(date)) {
+        grouped[date] = [];
+      }
+      grouped[date]!.add(tx);
+    }
+    return grouped;
+  }
+
+  double getDailyTotal(DateTime date) {
+    return _transactions
+        .where((tx) =>
+            DateTime(tx.timestamp.year, tx.timestamp.month, tx.timestamp.day) == date && tx.category != 'Transfer')
+        .fold(0.0, (sum, tx) => tx.isExpense ? sum - tx.amount : sum + tx.amount);
   }
 
 

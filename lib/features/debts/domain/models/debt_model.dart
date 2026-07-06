@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'debt_payment_model.dart';
 
 part 'debt_model.g.dart';
 
@@ -25,6 +26,15 @@ class DebtModel extends HiveObject {
   @HiveField(6)
   final String note;
 
+  @HiveField(7, defaultValue: 0.0)
+  final double paidAmount;
+
+  @HiveField(8, defaultValue: [])
+  final List<DebtPaymentModel> payments;
+
+  double get calculatedPaidAmount => payments.fold(0.0, (sum, payment) => sum + payment.amount) + paidAmount;
+  double get remainingAmount => amount - calculatedPaidAmount;
+
   DebtModel({
     required this.id,
     required this.personName,
@@ -33,6 +43,8 @@ class DebtModel extends HiveObject {
     this.isSettled = false,
     required this.timestamp,
     this.note = '',
+    this.paidAmount = 0.0,
+    this.payments = const [],
   });
 
   DebtModel copyWith({
@@ -43,6 +55,8 @@ class DebtModel extends HiveObject {
     bool? isSettled,
     DateTime? timestamp,
     String? note,
+    double? paidAmount,
+    List<DebtPaymentModel>? payments,
   }) {
     return DebtModel(
       id: id ?? this.id,
@@ -52,6 +66,8 @@ class DebtModel extends HiveObject {
       isSettled: isSettled ?? this.isSettled,
       timestamp: timestamp ?? this.timestamp,
       note: note ?? this.note,
+      paidAmount: paidAmount ?? this.paidAmount,
+      payments: payments ?? this.payments,
     );
   }
 
@@ -64,6 +80,8 @@ class DebtModel extends HiveObject {
       isSettled: json['isSettled'] ?? false,
       timestamp: DateTime.parse(json['timestamp']),
       note: json['note'] ?? '',
+      paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0.0,
+      payments: (json['payments'] as List?)?.map((e) => DebtPaymentModel.fromJson(Map<String, dynamic>.from(e))).toList() ?? [],
     );
   }
 
@@ -76,6 +94,8 @@ class DebtModel extends HiveObject {
       'isSettled': isSettled,
       'timestamp': timestamp.toIso8601String(),
       'note': note,
+      'paidAmount': paidAmount,
+      'payments': payments.map((e) => e.toJson()).toList(),
     };
   }
 }
