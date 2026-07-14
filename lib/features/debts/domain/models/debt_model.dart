@@ -32,6 +32,9 @@ class DebtModel extends HiveObject {
   @HiveField(8, defaultValue: [])
   final List<DebtPaymentModel> payments;
 
+  @HiveField(9, defaultValue: 'cash_account')
+  final String accountId;
+
   double get calculatedPaidAmount => payments.fold(0.0, (sum, payment) => sum + payment.amount) + paidAmount;
   double get remainingAmount => amount - calculatedPaidAmount;
 
@@ -45,6 +48,7 @@ class DebtModel extends HiveObject {
     this.note = '',
     this.paidAmount = 0.0,
     this.payments = const [],
+    this.accountId = 'cash_account',
   });
 
   DebtModel copyWith({
@@ -57,6 +61,7 @@ class DebtModel extends HiveObject {
     String? note,
     double? paidAmount,
     List<DebtPaymentModel>? payments,
+    String? accountId,
   }) {
     return DebtModel(
       id: id ?? this.id,
@@ -68,6 +73,7 @@ class DebtModel extends HiveObject {
       note: note ?? this.note,
       paidAmount: paidAmount ?? this.paidAmount,
       payments: payments ?? this.payments,
+      accountId: accountId ?? this.accountId,
     );
   }
 
@@ -82,6 +88,7 @@ class DebtModel extends HiveObject {
       note: json['note'] ?? '',
       paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0.0,
       payments: (json['payments'] as List?)?.map((e) => DebtPaymentModel.fromJson(Map<String, dynamic>.from(e))).toList() ?? [],
+      accountId: json['accountId'] ?? 'cash_account',
     );
   }
 
@@ -96,6 +103,7 @@ class DebtModel extends HiveObject {
       'note': note,
       'paidAmount': paidAmount,
       'payments': payments.map((e) => e.toJson()).toList(),
+      'accountId': accountId,
     };
   }
 }

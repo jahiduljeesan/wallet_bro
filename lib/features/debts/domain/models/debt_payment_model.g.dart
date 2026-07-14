@@ -21,13 +21,14 @@ class DebtPaymentModelAdapter extends TypeAdapter<DebtPaymentModel> {
       amount: fields[1] as double,
       timestamp: fields[2] as DateTime,
       note: fields[3] as String,
+      accountId: fields[4] == null ? 'cash_account' : fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, DebtPaymentModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class DebtPaymentModelAdapter extends TypeAdapter<DebtPaymentModel> {
       ..writeByte(2)
       ..write(obj.timestamp)
       ..writeByte(3)
-      ..write(obj.note);
+      ..write(obj.note)
+      ..writeByte(4)
+      ..write(obj.accountId);
   }
 
   @override

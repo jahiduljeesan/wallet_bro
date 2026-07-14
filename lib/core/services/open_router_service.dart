@@ -45,9 +45,7 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
         Notes:
         - If the user adds multiple transactions in one message, include all in `parsedCommandModels` array.
         - If there are no transactions, return an **empty array** for `parsedCommandModels` and provide **advice** if available.
-        - Allowed categories:
-          • Expense → Meal, Food, Bills, Rent, Medicine, Education, Travel, Shopping, Beauty, Entertainment, Transportation, Gifts, Subscriptions, Donation, Others  
-          • Income → Fixed, Variable, Passive, Bonuses, Refund, Others  
+        - Allowed categories will be provided in the Database Context below.
         
         Rules:
         1. Do **not** use categories outside this list.  
@@ -88,7 +86,7 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
         - **Non-finance topic exept → Refusal message**
 ''';
 
-  Future<String> generateResponse(String prompt) async {
+  Future<String> generateResponse(List<Map<String, String>> messages) async {
     try {
       final now = DateTime.now();
       final currentMonthId = DateFormat('yyyy-MM').format(now);
@@ -143,6 +141,14 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
       dbContext.writeln("- Lifetime Expense: ৳${overallExpense.toStringAsFixed(2)}");
       dbContext.writeln("");
 
+      // Add Dynamic Categories
+      final categories = HiveService.categoriesBox.values.toList();
+      final expenseCats = categories.where((c) => c.isExpense).map((c) => c.name).join(', ');
+      final incomeCats = categories.where((c) => !c.isExpense).map((c) => c.name).join(', ');
+      dbContext.writeln("Allowed categories:");
+      dbContext.writeln("• Expense → $expenseCats");
+      dbContext.writeln("• Income → $incomeCats\n");
+
       dbContext.writeln("Accounts & Live Balances (Available for Transfer):");
       if (accounts.isEmpty) {
         dbContext.writeln("- No accounts registered.");
@@ -188,7 +194,7 @@ You are the built-in AI assistant named "Jemi" inside the Android app "ExpenseBu
           "model": "cohere/north-mini-code:free",
           "messages": [
             {"role": "system", "content": fullSystemPrompt},
-            {"role": "user", "content": prompt},
+            ...messages,
           ],
           "reasoning": {"enabled": true},
         },

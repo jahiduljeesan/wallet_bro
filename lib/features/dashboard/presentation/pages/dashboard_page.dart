@@ -70,15 +70,29 @@ class DashboardPage extends StatelessWidget {
                       ),
                       const SizedBox(width: 16),
                       
-                      // Quick Insight Card
+                      // Quick Insight Cards
                       Expanded(
                         flex: 2,
-                        child: InsightCard(
-                          title: 'Top Category',
-                          value: provider.topCategory,
-                          subtitle: 'Most spent this month',
-                          icon: Icons.stars_rounded,
-                          color: Colors.orangeAccent,
+                        child: SizedBox(
+                          height: 180,
+                          child: PageView(
+                            children: [
+                              InsightCard(
+                                title: 'Top Category',
+                                value: provider.topCategory,
+                                subtitle: 'Most spent this month',
+                                icon: Icons.stars_rounded,
+                                color: Colors.orangeAccent,
+                              ),
+                              InsightCard(
+                                title: 'Avg Expense',
+                                value: CurrencyFormatter.format(provider.averageExpenseByCategory),
+                                subtitle: 'Per category',
+                                icon: Icons.analytics,
+                                color: Colors.blueAccent,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -689,7 +703,7 @@ class BudgetProgressSection extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: totalProgress,
                       minHeight: 12,
-                      backgroundColor: theme.colorScheme.surfaceVariant,
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         isTotalExceeded ? Colors.redAccent : (totalProgress > 0.8 ? Colors.orangeAccent : theme.colorScheme.primary),
                       ),
@@ -780,7 +794,7 @@ class BudgetProgressSection extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 8,
-                    backgroundColor: theme.colorScheme.surfaceVariant,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       isExceeded ? Colors.redAccent : (progress > 0.8 ? Colors.orangeAccent : Colors.greenAccent),
                     ),
@@ -797,7 +811,7 @@ class BudgetProgressSection extends StatelessWidget {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

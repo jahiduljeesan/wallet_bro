@@ -25,6 +25,9 @@ class CategoryModel extends HiveObject {
   @HiveField(6)
   final bool isCustom;
 
+  @HiveField(7, defaultValue: 0)
+  final int order;
+
   CategoryModel({
     required this.id,
     required this.name,
@@ -33,6 +36,7 @@ class CategoryModel extends HiveObject {
     this.iconCodePoint,
     this.iconFontFamily,
     this.isCustom = false,
+    this.order = 0,
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,7 @@ class CategoryModel extends HiveObject {
       iconCodePoint: json['iconCodePoint'],
       iconFontFamily: json['iconFontFamily'],
       isCustom: json['isCustom'] ?? false,
+      order: json['order'] ?? 0,
     );
   }
 
@@ -56,6 +61,7 @@ class CategoryModel extends HiveObject {
       'iconCodePoint': iconCodePoint,
       'iconFontFamily': iconFontFamily,
       'isCustom': isCustom,
+      'order': order,
     };
   }
 }

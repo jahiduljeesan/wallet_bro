@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/debt_provider.dart';
 import '../../domain/models/debt_model.dart';
 import 'add_debt_sheet.dart';
+import '../../../../core/services/hive_service.dart';
 
 class DebtPage extends StatelessWidget {
   const DebtPage({super.key});
@@ -92,46 +93,83 @@ class _DebtTile extends StatelessWidget {
   void _showPaymentDialog(BuildContext context) {
     final controller = TextEditingController(text: debt.remainingAmount.toStringAsFixed(0));
     final noteController = TextEditingController();
+    
+    final accounts = HiveService.accountsBox.values.toList();
+    String selectedAccountId = debt.accountId;
+    if (accounts.isNotEmpty && !accounts.any((a) => a.id == selectedAccountId)) {
+      selectedAccountId = accounts.first.id;
+    }
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Record Payment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Amount Paid',
-                prefixIcon: Icon(Icons.attach_money),
-                border: OutlineInputBorder(),
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Record Payment'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Amount Paid',
+                    prefixIcon: Icon(Icons.attach_money),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedAccountId,
+                  decoration: const InputDecoration(
+                    labelText: 'Account',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.account_balance_wallet),
+                  ),
+                  items: [
+                    if (accounts.isEmpty)
+                      const DropdownMenuItem(
+                        value: 'cash_account',
+                        child: Text('Cash'),
+                      )
+                    else
+                      ...accounts.map((acc) => DropdownMenuItem(
+                            value: acc.id,
+                            child: Text(acc.name),
+                          )),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => selectedAccountId = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteController,
+                  decoration: const InputDecoration(
+                    labelText: 'Note (Optional)',
+                    prefixIcon: Icon(Icons.notes),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: noteController,
-              decoration: const InputDecoration(
-                labelText: 'Note (Optional)',
-                prefixIcon: Icon(Icons.notes),
-                border: OutlineInputBorder(),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () {
+                  final amount = double.tryParse(controller.text) ?? 0;
+                  if (amount > 0) {
+                    provider.payPartialAmount(debt.id, amount, note: noteController.text, accountId: selectedAccountId);
+                    Navigator.pop(ctx);
+                  }
+                },
+                child: const Text('Save'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              final amount = double.tryParse(controller.text) ?? 0;
-              if (amount > 0) {
-                provider.payPartialAmount(debt.id, amount, note: noteController.text);
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+            ],
+          );
+        }
       ),
     );
   }

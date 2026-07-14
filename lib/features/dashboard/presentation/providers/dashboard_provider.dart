@@ -68,6 +68,13 @@ class DashboardProvider extends ChangeNotifier {
     return catData.entries.fold(catData.entries.first, (a, b) => a.value > b.value ? a : b).key;
   }
 
+  double get averageExpenseByCategory {
+    final catData = getCategoryData();
+    if (catData.isEmpty) return 0.0;
+    final totalExpense = catData.values.fold(0.0, (a, b) => a + b);
+    return totalExpense / catData.length;
+  }
+
   Map<DateTime, List<TransactionModel>> get groupedTransactions {
     final Map<DateTime, List<TransactionModel>> grouped = {};
     for (var tx in _transactions) {

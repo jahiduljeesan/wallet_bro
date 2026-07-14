@@ -5,6 +5,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../categories/presentation/pages/category_management_page.dart';
 import 'backup_page.dart';
 import '../../../budget/presentation/pages/budget_management_page.dart';
+import '../../../../core/services/pdf_service.dart';
+import '../../reports/presentation/pages/pdf_preview_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -108,6 +110,23 @@ class ProfilePage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const BackupPage(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.picture_as_pdf_outlined),
+                  title: const Text('Generate Report', style: TextStyle(fontWeight: FontWeight.w500)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    final pdfFuture = PDFService.generateReport('ExpenseBuddy Report');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PDFPreviewPage(
+                          pdfFuture: pdfFuture,
+                          title: 'ExpenseBuddy Report',
+                        ),
                       ),
                     );
                   },

@@ -79,7 +79,11 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
 
     // API call
-    final response = await _openRouterService.generateResponse(text);
+    final formattedMessages = _messages.map((m) => {
+      "role": m.isUser ? "user" : "assistant",
+      "content": m.text
+    }).toList();
+    final response = await _openRouterService.generateResponse(formattedMessages);
     
     _isLoading = false;
     
@@ -119,7 +123,7 @@ class ChatProvider extends ChangeNotifier {
                 ? (item['initialBalance'] as num).toDouble()
                 : double.tryParse(item['initialBalance'].toString()) ?? 0.0;
                 
-            final String newId = name.replaceAll(' ', '_').toLowerCase() + '_${DateTime.now().millisecondsSinceEpoch}';
+            final String newId = '${name.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}';
             final newAcc = AccountModel(
               id: newId,
               name: name,
@@ -186,7 +190,7 @@ class ChatProvider extends ChangeNotifier {
 
             final now = DateTime.now();
             final outTx = TransactionModel(
-              id: now.microsecondsSinceEpoch.toString() + 'out',
+              id: '${now.microsecondsSinceEpoch}out',
               amount: amount,
               category: 'Transfer',
               note: 'Transfer to $toAccName',
@@ -196,7 +200,7 @@ class ChatProvider extends ChangeNotifier {
               isExpense: true,
             );
             final inTx = TransactionModel(
-              id: now.microsecondsSinceEpoch.toString() + 'in',
+              id: '${now.microsecondsSinceEpoch}in',
               amount: amount,
               category: 'Transfer',
               note: 'Transfer from $fromAccName',

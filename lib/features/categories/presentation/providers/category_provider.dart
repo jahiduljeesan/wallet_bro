@@ -26,6 +26,7 @@ class CategoryProvider extends ChangeNotifier {
 
   void _loadCategories() {
     _categories = HiveService.categoriesBox.values.toList();
+    _categories.sort((a, b) => a.order.compareTo(b.order));
     notifyListeners();
   }
 
@@ -58,9 +59,44 @@ class CategoryProvider extends ChangeNotifier {
       iconCodePoint: iconCodePoint,
       iconFontFamily: iconCodePoint != null ? 'MaterialIcons' : null,
       isCustom: true,
+      order: _categories.length,
     );
 
     await HiveService.categoriesBox.put(id, category);
+  }
+
+  Future<void> reorderCategories(int oldIndex, int newIndex, bool isExpense) async {
+    final list = isExpense ? expenseCategories : incomeCategories;
+    
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    
+    final CategoryModel item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+
+    // Update orders for the specific list (expense or income)
+    for (int i = 0; i < list.length; i++) {
+      final category = list[i];
+      // Note: we can't modify fields of a HiveObject directly if they are final.
+      // We need to copy and put, or change them to non-final.
+      // Wait, let's look at `CategoryModel` again. `order` is `final`. We need to change it to non-final, or create a copyWith method.
+      // Actually, since it's Hive, if we change it to non-final we can just do category.order = i; category.save();
+      // Or we can overwrite with HiveService.categoriesBox.put(category.id, CategoryModel(..., order: i));
+      final updatedCat = CategoryModel(
+        id: category.id,
+        name: category.name,
+        isExpense: category.isExpense,
+        iconPath: category.iconPath,
+        iconCodePoint: category.iconCodePoint,
+        iconFontFamily: category.iconFontFamily,
+        isCustom: category.isCustom,
+        order: i,
+      );
+      await HiveService.categoriesBox.put(category.id, updatedCat);
+    }
+    
+    _loadCategories();
   }
 
   Future<void> deleteCategory(String id) async {

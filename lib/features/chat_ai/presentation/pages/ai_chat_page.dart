@@ -173,6 +173,36 @@ class _AIChatViewState extends State<AIChatView> {
           
 
 
+          // Predefined Suggestions
+          if (provider.messages.length <= 1)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _SuggestionChip(
+                      label: 'Average meal expense',
+                      onTap: () {
+                        provider.sendMessage('What is my average meal expense?');
+                      },
+                      theme: theme,
+                    ),
+                    const SizedBox(width: 8),
+                    _SuggestionChip(
+                      label: 'Average costing this month by category',
+                      onTap: () {
+                        provider.sendMessage('What is my average costing this month by category?');
+                      },
+                      theme: theme,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Input Area
           Container(
             padding: const EdgeInsets.all(16),
@@ -334,6 +364,29 @@ class _ChatBubbleState extends State<_ChatBubble> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SuggestionChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final ThemeData theme;
+
+  const _SuggestionChip({
+    required this.label,
+    required this.onTap,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      onPressed: onTap,
+      backgroundColor: theme.colorScheme.surface,
+      side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
   }
 }

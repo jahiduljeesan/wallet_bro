@@ -32,6 +32,7 @@ class DebtProvider extends ChangeNotifier {
     required double amount,
     required bool isDebt,
     String note = '',
+    String accountId = 'cash_account',
   }) async {
     final bool isUpdate = id != null;
     final debtId = id ?? const Uuid().v4();
@@ -45,6 +46,7 @@ class DebtProvider extends ChangeNotifier {
           amount: amount,
           isDebt: isDebt,
           note: note,
+          accountId: accountId,
         );
         await HiveService.debtsBox.put(debtId, updatedDebt);
       }
@@ -56,12 +58,13 @@ class DebtProvider extends ChangeNotifier {
         isDebt: isDebt,
         timestamp: now,
         note: note,
+        accountId: accountId,
       );
       await HiveService.debtsBox.put(debtId, newDebt);
 
-      // Create transaction for Cash Account
-      final cashAccount = HiveService.accountsBox.get('cash_account');
-      if (cashAccount != null) {
+      // Create transaction for selected Account
+      final selectedAccount = HiveService.accountsBox.get(accountId);
+      if (selectedAccount != null) {
         final tx = TransactionModel(
           id: const Uuid().v4(),
           amount: amount,
@@ -69,7 +72,7 @@ class DebtProvider extends ChangeNotifier {
           note: note.isNotEmpty ? note : 'Debt with $personName',
           timestamp: now,
           createdBy: 'debt_system',
-          accountId: 'cash_account',
+          accountId: accountId,
           isExpense: !isDebt, // If Lent (Owed to me), it's an expense (cash out). If Borrowed (I Owe), it's income (cash in).
         );
         await HiveService.transactionsBox.put(tx.id, tx);
@@ -77,7 +80,7 @@ class DebtProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> payPartialAmount(String id, double payAmount, {String note = ''}) async {
+  Future<void> payPartialAmount(String id, double payAmount, {String note = '', String accountId = 'cash_account'}) async {
     final debt = HiveService.debtsBox.get(id);
     if (debt != null) {
       final newPayment = DebtPaymentModel(
@@ -85,6 +88,7 @@ class DebtProvider extends ChangeNotifier {
         amount: payAmount,
         timestamp: DateTime.now(),
         note: note,
+        accountId: accountId,
       );
       
       final updatedPayments = List<DebtPaymentModel>.from(debt.payments)..add(newPayment);
@@ -98,9 +102,9 @@ class DebtProvider extends ChangeNotifier {
       );
       await HiveService.debtsBox.put(id, updatedDebt);
 
-      // Create transaction for Cash Account for the payment
-      final cashAccount = HiveService.accountsBox.get('cash_account');
-      if (cashAccount != null) {
+      // Create transaction for selected Account for the payment
+      final selectedAccount = HiveService.accountsBox.get(accountId);
+      if (selectedAccount != null) {
         final txNote = note.isNotEmpty ? note : 'Payment for debt with ${debt.personName}';
         final tx = TransactionModel(
           id: const Uuid().v4(),
@@ -109,7 +113,7 @@ class DebtProvider extends ChangeNotifier {
           note: txNote,
           timestamp: DateTime.now(),
           createdBy: 'debt_system',
-          accountId: 'cash_account',
+          accountId: accountId,
           isExpense: debt.isDebt, // If paying back what I owe, it's an expense (cash out). If collecting, it's income (cash in).
         );
         await HiveService.transactionsBox.put(tx.id, tx);

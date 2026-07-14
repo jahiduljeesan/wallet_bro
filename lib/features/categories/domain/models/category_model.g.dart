@@ -24,13 +24,14 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       iconCodePoint: fields[4] as int?,
       iconFontFamily: fields[5] as String?,
       isCustom: fields[6] as bool,
+      order: fields[7] == null ? 0 : fields[7] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, CategoryModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       ..writeByte(5)
       ..write(obj.iconFontFamily)
       ..writeByte(6)
-      ..write(obj.isCustom);
+      ..write(obj.isCustom)
+      ..writeByte(7)
+      ..write(obj.order);
   }
 
   @override

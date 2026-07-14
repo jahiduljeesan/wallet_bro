@@ -79,12 +79,16 @@ class CategoryListTab extends StatelessWidget {
       );
     }
 
-    return ListView.builder(
+    return ReorderableListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: cats.length,
+      onReorder: (oldIndex, newIndex) {
+        provider.reorderCategories(oldIndex, newIndex, isExpense);
+      },
       itemBuilder: (context, index) {
         final cat = cats[index];
         return Card(
+          key: ValueKey(cat.id),
           margin: const EdgeInsets.only(bottom: 8),
           elevation: 0,
           color: theme.colorScheme.surface,
@@ -95,8 +99,8 @@ class CategoryListTab extends StatelessWidget {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: isExpense
-                  ? Colors.redAccent.withOpacity(0.1)
-                  : Colors.greenAccent.withOpacity(0.1),
+                  ? Colors.redAccent.withOpacity(0.05)
+                  : Colors.greenAccent.withOpacity(0.05),
               child: Padding(
                 padding: const EdgeInsets.all(6.0),
                 child: CategoryIcon(
@@ -446,7 +450,7 @@ class _AddCategorySheetState extends State<AddCategorySheet> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? theme.colorScheme.primary.withOpacity(0.15)
+                            ? theme.colorScheme.primary.withOpacity(0.05)
                             : Colors.transparent,
                         border: Border.all(
                           color: isSelected

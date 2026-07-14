@@ -25,28 +25,34 @@ class StatisticsView extends StatefulWidget {
 }
 
 class _StatisticsViewState extends State<StatisticsView> {
-  String? _selectedMonth;
+  String? _selectedPeriod;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<StatisticsProvider>(context, listen: false);
-      if (provider.availableMonths.isNotEmpty) {
+      if (provider.availablePeriods.isNotEmpty) {
         setState(() {
-          _selectedMonth = provider.availableMonths.first;
+          _selectedPeriod = provider.availablePeriods.first;
         });
       }
     });
   }
 
-  String _formatMonthHeader(String yearMonth) {
+  String _formatPeriodHeader(String period, FilterPeriod filter) {
     try {
-      final parts = yearMonth.split('-');
-      final dt = DateTime(int.parse(parts[0]), int.parse(parts[1]));
-      return DateFormat('MMMM yyyy').format(dt);
+      if (filter == FilterPeriod.year) {
+        return period; // e.g. "2023"
+      } else if (filter == FilterPeriod.week) {
+        return period.replaceAll('-W', ' Week '); // e.g. "2023 Week 41"
+      } else {
+        final parts = period.split('-');
+        final dt = DateTime(int.parse(parts[0]), int.parse(parts[1]));
+        return DateFormat('MMM yyyy').format(dt);
+      }
     } catch (e) {
-      return yearMonth;
+      return period;
     }
   }
 
@@ -54,46 +60,69 @@ class _StatisticsViewState extends State<StatisticsView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final provider = Provider.of<StatisticsProvider>(context);
-    final months = provider.availableMonths;
+    final periods = provider.availablePeriods;
 
-    if (_selectedMonth == null && months.isNotEmpty) {
-      _selectedMonth = months.first;
+    if (_selectedPeriod == null && periods.isNotEmpty) {
+      _selectedPeriod = periods.first;
+    } else if (periods.isNotEmpty && !periods.contains(_selectedPeriod)) {
+      _selectedPeriod = periods.first;
     }
 
-    if (months.isEmpty) {
+    if (periods.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: const Text('Statistics')),
         body: const Center(child: Text('Add transactions to see statistics.')),
       );
     }
 
-    final currentSummary = provider.getSummaryForMonth(_selectedMonth!);
-    final currentTxs = provider.getTransactionsForMonth(_selectedMonth!);
+    final currentSummary = provider.getSummaryForPeriod(_selectedPeriod!);
+    final currentTxs = provider.getTransactionsForPeriod(_selectedPeriod!);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(title: const Text('Statistics'), elevation: 0),
       body: CustomScrollView(
         slivers: [
-          // Month Selector
+          // Filter Period Toggle
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: SegmentedButton<FilterPeriod>(
+                segments: const [
+                  ButtonSegment(value: FilterPeriod.week, label: Text('Week')),
+                  ButtonSegment(value: FilterPeriod.month, label: Text('Month')),
+                  ButtonSegment(value: FilterPeriod.year, label: Text('Year')),
+                ],
+                selected: {provider.currentFilter},
+                onSelectionChanged: (Set<FilterPeriod> newSelection) {
+                  provider.setFilter(newSelection.first);
+                  setState(() {
+                    _selectedPeriod = null; // Will auto-select first available
+                  });
+                },
+              ),
+            ),
+          ),
+
+          // Period Selector
           SliverToBoxAdapter(
             child: SizedBox(
               height: 60,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: months.length,
+                itemCount: periods.length,
                 itemBuilder: (context, index) {
-                  final monthStr = months[index];
-                  final isSelected = _selectedMonth == monthStr;
+                  final periodStr = periods[index];
+                  final isSelected = _selectedPeriod == periodStr;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: ChoiceChip(
-                      label: Text(_formatMonthHeader(monthStr)),
+                      label: Text(_formatPeriodHeader(periodStr, provider.currentFilter)),
                       selected: isSelected,
                       onSelected: (val) {
                         setState(() {
-                          _selectedMonth = monthStr;
+                          _selectedPeriod = periodStr;
                         });
                       },
                       selectedColor: theme.colorScheme.primary,
@@ -110,28 +139,45 @@ class _StatisticsViewState extends State<StatisticsView> {
             ),
           ),
 
-          // Monthly Summary Cards
+          // Summary Cards
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: _SummaryCard(
-                      title: 'Income',
-                      amount: currentSummary['income'] ?? 0,
-                      color: Colors.green,
-                      icon: Icons.arrow_downward_rounded,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SummaryCard(
+                          title: 'Income',
+                          amount: currentSummary['income'] ?? 0,
+                          color: Colors.green,
+                          icon: Icons.arrow_downward_rounded,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _SummaryCard(
+                          title: 'Expense',
+                          amount: currentSummary['expense'] ?? 0,
+                          color: Colors.redAccent,
+                          icon: Icons.arrow_outward_rounded,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _SummaryCard(
-                      title: 'Expense',
-                      amount: currentSummary['expense'] ?? 0,
-                      color: Colors.redAccent,
-                      icon: Icons.arrow_outward_rounded,
-                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SummaryCard(
+                          title: 'Net Balance',
+                          amount: currentSummary['net'] ?? 0,
+                          color: (currentSummary['net'] ?? 0) >= 0 ? Colors.blue : Colors.orange,
+                          icon: Icons.account_balance_wallet,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -211,7 +257,7 @@ class _StatisticsViewState extends State<StatisticsView> {
 
                     // Daily Expenses Chart
                     Text(
-                      'Daily Expenses',
+                      provider.currentFilter == FilterPeriod.year ? 'Monthly Expenses' : (provider.currentFilter == FilterPeriod.week ? 'Daily Expenses (Week)' : 'Daily Expenses'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -224,7 +270,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                           alignment: BarChartAlignment.spaceAround,
                           maxY:
                               (provider
-                                  .getDailyExpenses(_selectedMonth!)
+                                  .getPeriodicExpenses(_selectedPeriod!)
                                   .values
                                   .fold<double>(0.0, (m, v) => m > v ? m : v)) *
                               1.2,
@@ -235,15 +281,38 @@ class _StatisticsViewState extends State<StatisticsView> {
                               sideTitles: SideTitles(
                                 showTitles: true,
                                 getTitlesWidget: (value, meta) {
-                                  if (value % 5 != 0 && value != 1)
+                                  if (provider.currentFilter == FilterPeriod.year) {
+                                    // Months: 1=Jan, etc
+                                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                                    if (value >= 1 && value <= 12) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 8.0),
+                                        child: Text(months[value.toInt() - 1], style: const TextStyle(fontSize: 10)),
+                                      );
+                                    }
                                     return const SizedBox.shrink();
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                      value.toInt().toString(),
-                                      style: const TextStyle(fontSize: 10),
-                                    ),
-                                  );
+                                  } else if (provider.currentFilter == FilterPeriod.week) {
+                                    // Weekdays: 1=Mon, 7=Sun
+                                    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                                    if (value >= 1 && value <= 7) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 8.0),
+                                        child: Text(days[value.toInt() - 1], style: const TextStyle(fontSize: 10)),
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  } else {
+                                    if (value % 5 != 0 && value != 1) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text(
+                                        value.toInt().toString(),
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    );
+                                  }
                                 },
                               ),
                             ),
@@ -260,7 +329,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                           gridData: const FlGridData(show: false),
                           borderData: FlBorderData(show: false),
                           barGroups: provider
-                              .getDailyExpenses(_selectedMonth!)
+                              .getPeriodicExpenses(_selectedPeriod!)
                               .entries
                               .map((e) {
                                 return BarChartGroupData(
@@ -290,7 +359,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                     ),
                     const SizedBox(height: 8),
                     ...provider
-                        .getTopCategories(_selectedMonth!, isExpense: true)
+                        .getTopCategories(_selectedPeriod!, isExpense: true)
                         .take(3)
                         .map((e) {
                           return ListTile(
@@ -335,7 +404,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                 vertical: 8.0,
               ).copyWith(top: 24),
               child: Text(
-                'Transactions in ${_formatMonthHeader(_selectedMonth!)}',
+                'Transactions in ${_formatPeriodHeader(_selectedPeriod!, provider.currentFilter)}',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../providers/debt_provider.dart';
 
 import '../../domain/models/debt_model.dart';
+import '../../../../core/services/hive_service.dart';
 
 class AddDebtSheet extends StatefulWidget {
   final DebtProvider provider;
@@ -19,6 +20,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
   double _amount = 0.0;
   String _note = '';
   bool _isDebt = true; // Default to "I Owe"
+  String _selectedAccountId = 'cash_account';
 
   @override
   void initState() {
@@ -28,6 +30,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
       _amount = widget.debt!.amount;
       _note = widget.debt!.note;
       _isDebt = widget.debt!.isDebt;
+      _selectedAccountId = widget.debt!.accountId;
     }
   }
 
@@ -40,6 +43,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
         amount: _amount,
         isDebt: _isDebt,
         note: _note,
+        accountId: _selectedAccountId,
       );
       if (mounted) {
         Navigator.pop(context);
@@ -49,6 +53,13 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final accounts = HiveService.accountsBox.values.toList();
+    if (accounts.isEmpty && _selectedAccountId != 'cash_account') {
+        _selectedAccountId = 'cash_account';
+    } else if (accounts.isNotEmpty && !accounts.any((a) => a.id == _selectedAccountId)) {
+        _selectedAccountId = accounts.first.id;
+    }
+
     final theme = Theme.of(context);
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
@@ -131,6 +142,32 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
                   prefixIcon: Icon(Icons.notes),
                 ),
                 onSaved: (val) => _note = val ?? '',
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedAccountId,
+                decoration: const InputDecoration(
+                  labelText: 'Account',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.account_balance_wallet),
+                ),
+                items: [
+                  if (accounts.isEmpty)
+                    const DropdownMenuItem(
+                      value: 'cash_account',
+                      child: Text('Cash'),
+                    )
+                  else
+                    ...accounts.map((acc) => DropdownMenuItem(
+                          value: acc.id,
+                          child: Text(acc.name),
+                        )),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _selectedAccountId = val);
+                  }
+                },
               ),
               const SizedBox(height: 24),
               ElevatedButton(

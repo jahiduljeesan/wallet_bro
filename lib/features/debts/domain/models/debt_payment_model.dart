@@ -16,11 +16,15 @@ class DebtPaymentModel extends HiveObject {
   @HiveField(3)
   final String note;
 
+  @HiveField(4, defaultValue: 'cash_account')
+  final String accountId;
+
   DebtPaymentModel({
     required this.id,
     required this.amount,
     required this.timestamp,
     this.note = '',
+    this.accountId = 'cash_account',
   });
 
   factory DebtPaymentModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,7 @@ class DebtPaymentModel extends HiveObject {
       amount: (json['amount'] as num).toDouble(),
       timestamp: DateTime.parse(json['timestamp']),
       note: json['note'] ?? '',
+      accountId: json['accountId'] ?? 'cash_account',
     );
   }
 
@@ -38,6 +43,7 @@ class DebtPaymentModel extends HiveObject {
       'amount': amount,
       'timestamp': timestamp.toIso8601String(),
       'note': note,
+      'accountId': accountId,
     };
   }
 }
