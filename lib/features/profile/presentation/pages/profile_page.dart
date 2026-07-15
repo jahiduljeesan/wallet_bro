@@ -6,7 +6,7 @@ import '../../../categories/presentation/pages/category_management_page.dart';
 import 'backup_page.dart';
 import '../../../budget/presentation/pages/budget_management_page.dart';
 import '../../../../core/services/pdf_service.dart';
-import '../../reports/presentation/pages/pdf_preview_page.dart';
+import '../../../reports/presentation/pages/pdf_preview_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
