@@ -120,7 +120,7 @@ class _DebtTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedAccountId,
+                  initialValue: selectedAccountId,
                   decoration: const InputDecoration(
                     labelText: 'Account',
                     border: OutlineInputBorder(),

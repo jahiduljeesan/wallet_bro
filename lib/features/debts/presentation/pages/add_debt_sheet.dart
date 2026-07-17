@@ -145,7 +145,7 @@ class _AddDebtSheetState extends State<AddDebtSheet> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedAccountId,
+                initialValue: _selectedAccountId,
                 decoration: const InputDecoration(
                   labelText: 'Account',
                   border: OutlineInputBorder(),
