@@ -76,7 +76,13 @@ class _StatisticsViewState extends State<StatisticsView> {
     }
 
     final currentSummary = provider.getSummaryForPeriod(_selectedPeriod!);
-    final currentTxs = provider.getTransactionsForPeriod(_selectedPeriod!);
+    final categoryAnalytics = provider.getCategoryAnalytics(_selectedPeriod!);
+    final periodicData = provider.getPeriodicIncomeAndExpense(_selectedPeriod!);
+    
+    final sortedPeriodicEntries = periodicData.entries.toList()..sort((a,b) => a.key.compareTo(b.key));
+    
+    // Check if we have enough data to draw the line chart
+    final hasEnoughTrendData = sortedPeriodicEntries.length >= 2;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -208,182 +214,227 @@ class _StatisticsViewState extends State<StatisticsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Income vs Expense Pie Chart
-                    Text(
-                      'Income vs Expense',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 200,
-                      child: PieChart(
-                        PieChartData(
-                          sectionsSpace: 4,
-                          centerSpaceRadius: 40,
-                          sections: [
-                            if (currentSummary['income']! > 0)
-                              PieChartSectionData(
-                                color: Colors.greenAccent,
-                                value: currentSummary['income']!,
-                                title:
-                                    "${((currentSummary['income']! / (currentSummary['income']! + currentSummary['expense']!)) * 100).toStringAsFixed(0)}%",
-                                radius: 50,
-                                titleStyle: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            if (currentSummary['expense']! > 0)
-                              PieChartSectionData(
-                                color: Colors.redAccent,
-                                value: currentSummary['expense']!,
-                                title:
-                                    "${((currentSummary['expense']! / (currentSummary['income']! + currentSummary['expense']!)) * 100).toStringAsFixed(0)}%",
-                                radius: 50,
-                                titleStyle: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                          ],
+                    // Income vs Expense Trend Chart
+                    if (hasEnoughTrendData) ...[
+                      Text(
+                        'Income vs Expense Trend',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Daily Expenses Chart
-                    Text(
-                      provider.currentFilter == FilterPeriod.year ? 'Monthly Expenses' : (provider.currentFilter == FilterPeriod.week ? 'Daily Expenses (Week)' : 'Daily Expenses'),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 180,
-                      child: BarChart(
-                        BarChartData(
-                          alignment: BarChartAlignment.spaceAround,
-                          maxY:
-                              (provider
-                                  .getPeriodicExpenses(_selectedPeriod!)
-                                  .values
-                                  .fold<double>(0.0, (m, v) => m > v ? m : v)) *
-                              1.2,
-                          barTouchData: BarTouchData(enabled: false),
-                          titlesData: FlTitlesData(
-                            show: true,
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (value, meta) {
-                                  if (provider.currentFilter == FilterPeriod.year) {
-                                    // Months: 1=Jan, etc
-                                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                                    if (value >= 1 && value <= 12) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(top: 8.0),
-                                        child: Text(months[value.toInt() - 1], style: const TextStyle(fontSize: 10)),
-                                      );
-                                    }
-                                    return const SizedBox.shrink();
-                                  } else if (provider.currentFilter == FilterPeriod.week) {
-                                    // Weekdays: 1=Mon, 7=Sun
-                                    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-                                    if (value >= 1 && value <= 7) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(top: 8.0),
-                                        child: Text(days[value.toInt() - 1], style: const TextStyle(fontSize: 10)),
-                                      );
-                                    }
-                                    return const SizedBox.shrink();
-                                  } else {
-                                    if (value % 5 != 0 && value != 1) {
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 200,
+                        child: LineChart(
+                          LineChartData(
+                            gridData: const FlGridData(show: false),
+                            titlesData: FlTitlesData(
+                              show: true,
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  getTitlesWidget: (value, meta) {
+                                    if (provider.currentFilter == FilterPeriod.year) {
+                                      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                                      if (value >= 1 && value <= 12) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(top: 8.0),
+                                          child: Text(months[value.toInt() - 1], style: const TextStyle(fontSize: 10)),
+                                        );
+                                      }
                                       return const SizedBox.shrink();
+                                    } else if (provider.currentFilter == FilterPeriod.week) {
+                                      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                                      if (value >= 1 && value <= 7) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(top: 8.0),
+                                          child: Text(days[value.toInt() - 1], style: const TextStyle(fontSize: 10)),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    } else {
+                                      if (value % 5 != 0 && value != 1 && value != provider.getDaysInPeriod(_selectedPeriod!)) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 8.0),
+                                        child: Text(
+                                          value.toInt().toString(),
+                                          style: const TextStyle(fontSize: 10),
+                                        ),
+                                      );
                                     }
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                        value.toInt().toString(),
-                                        style: const TextStyle(fontSize: 10),
-                                      ),
-                                    );
-                                  }
-                                },
+                                  },
+                                ),
+                              ),
+                              leftTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              topTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
                               ),
                             ),
-                            leftTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
-                            topTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
-                            rightTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
+                            borderData: FlBorderData(show: false),
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: sortedPeriodicEntries
+                                    .map((e) => FlSpot(e.key.toDouble(), e.value['income']!))
+                                    .toList(),
+                                isCurved: true,
+                                color: Colors.greenAccent,
+                                barWidth: 3,
+                                dotData: const FlDotData(show: false),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  color: Colors.greenAccent.withValues(alpha: 0.1),
+                                ),
+                              ),
+                              LineChartBarData(
+                                spots: sortedPeriodicEntries
+                                    .map((e) => FlSpot(e.key.toDouble(), e.value['expense']!))
+                                    .toList(),
+                                isCurved: true,
+                                color: Colors.redAccent,
+                                barWidth: 3,
+                                dotData: const FlDotData(show: false),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  color: Colors.redAccent.withValues(alpha: 0.1),
+                                ),
+                              ),
+                            ],
                           ),
-                          gridData: const FlGridData(show: false),
-                          borderData: FlBorderData(show: false),
-                          barGroups: provider
-                              .getPeriodicExpenses(_selectedPeriod!)
-                              .entries
-                              .map((e) {
-                                return BarChartGroupData(
-                                  x: e.key,
-                                  barRods: [
-                                    BarChartRodData(
-                                      toY: e.value,
-                                      color: Colors.redAccent,
-                                      width: 8,
-                                      borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(width: 12, height: 12, color: Colors.greenAccent),
+                          const SizedBox(width: 4),
+                          const Text('Income', style: TextStyle(fontSize: 12)),
+                          const SizedBox(width: 16),
+                          Container(width: 12, height: 12, color: Colors.redAccent),
+                          const SizedBox(width: 4),
+                          const Text('Expense', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+
+                    // Expense Breakdown Donut Chart
+                    if (categoryAnalytics.isNotEmpty) ...[
+                      Text(
+                        'Expense Breakdown',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 200,
+                        child: PieChart(
+                          PieChartData(
+                            sectionsSpace: 2,
+                            centerSpaceRadius: 60,
+                            sections: categoryAnalytics.map((e) {
+                              final i = categoryAnalytics.indexOf(e);
+                              final colors = [
+                                Colors.redAccent,
+                                Colors.blueAccent,
+                                Colors.orangeAccent,
+                                Colors.purpleAccent,
+                                Colors.tealAccent,
+                                Colors.amberAccent,
+                                Colors.pinkAccent,
+                                Colors.cyanAccent,
+                              ];
+                              final color = colors[i % colors.length];
+                              return PieChartSectionData(
+                                color: color,
+                                value: e['total'],
+                                title: "${(e['percentage'] as double).toStringAsFixed(0)}%",
+                                radius: 40,
+                                titleStyle: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Category Analysis
+                      Text(
+                        'Category Analysis',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...categoryAnalytics.map((e) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+                                  child: CategoryIcon(
+                                    categoryName: e['category'],
+                                    isExpense: true,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  e['category'],
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(
+                                  "Daily Avg: ৳${(e['daily_average'] as double).toStringAsFixed(0)}",
+                                ),
+                                trailing: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '৳${(e['total'] as double).toStringAsFixed(0)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.redAccent,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(e['percentage'] as double).toStringAsFixed(1)}%',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: theme.textTheme.bodySmall?.color,
+                                      ),
                                     ),
                                   ],
-                                );
-                              })
-                              .toList(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Top Categories
-                    Text(
-                      'Top Expense Categories',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ...provider
-                        .getTopCategories(_selectedPeriod!, isExpense: true)
-                        .take(3)
-                        .map((e) {
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.redAccent.withOpacity(
-                                0.1,
+                                ),
                               ),
-                              child: CategoryIcon(
-                                categoryName: e.key,
-                                isExpense: true,
-                                size: 20,
-                              ),
-                            ),
-                            title: Text(e.key),
-                            trailing: Text(
-                              '৳${e.value.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                              LinearProgressIndicator(
+                                value: (e['percentage'] as double) / 100,
+                                backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                                 color: Colors.redAccent,
+                                minHeight: 6,
+                                borderRadius: BorderRadius.circular(3),
                               ),
-                            ),
-                          );
-                        }),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
                   ],
                 ),
               ),
@@ -395,74 +446,6 @@ class _StatisticsViewState extends State<StatisticsView> {
                 child: Center(child: Text("No data for analytics")),
               ),
             ),
-
-          // Transactions List Title
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ).copyWith(top: 24),
-              child: Text(
-                'Transactions in ${_formatPeriodHeader(_selectedPeriod!, provider.currentFilter)}',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          // Transactions List
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final tx = currentTxs[index];
-              final dateStr = DateFormat(
-                'MMM d, y h:mm a',
-              ).format(tx.timestamp);
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 4.0,
-                ),
-                child: Card(
-                  elevation: 0,
-                  color: theme.colorScheme.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: tx.isExpense
-                          ? Colors.redAccent.withOpacity(0.1)
-                          : Colors.greenAccent.withOpacity(0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: CategoryIcon(
-                          categoryName: tx.category,
-                          isExpense: tx.isExpense,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      tx.category,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(tx.note.isNotEmpty ? tx.note : dateStr),
-                    trailing: Text(
-                      "${tx.isExpense ? '-' : '+'}৳${tx.amount.toStringAsFixed(0)}",
-                      style: TextStyle(
-                        color: tx.isExpense ? Colors.redAccent : Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }, childCount: currentTxs.length),
-          ),
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
       ),
@@ -489,12 +472,13 @@ class _SummaryCard extends StatelessWidget {
 
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             CircleAvatar(
-              backgroundColor: color.withOpacity(0.1),
+              backgroundColor: color.withValues(alpha: 0.1),
               radius: 20,
               child: Icon(icon, color: color),
             ),
@@ -502,7 +486,7 @@ class _SummaryCard extends StatelessWidget {
             Text(
               title,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 4),

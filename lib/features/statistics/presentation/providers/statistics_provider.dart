@@ -107,4 +107,69 @@ class StatisticsProvider extends ChangeNotifier {
     }
     return periodicData;
   }
+  int getDaysInPeriod(String period) {
+    if (period.isEmpty) return 1;
+    if (_currentFilter == FilterPeriod.year) {
+      final year = int.parse(period);
+      return DateTime(year, 12, 31).difference(DateTime(year, 1, 1)).inDays + 1;
+    } else if (_currentFilter == FilterPeriod.week) {
+      return 7;
+    } else {
+      // Month
+      final parts = period.split('-');
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      return DateTime(year, month + 1, 0).day;
+    }
+  }
+
+  List<Map<String, dynamic>> getCategoryAnalytics(String period) {
+    final txs = getTransactionsForPeriod(period).where((tx) => tx.isExpense && tx.category != 'Transfer');
+    final Map<String, double> categoryMap = {};
+    double totalExpense = 0;
+    
+    for (var tx in txs) {
+      categoryMap[tx.category] = (categoryMap[tx.category] ?? 0) + tx.amount;
+      totalExpense += tx.amount;
+    }
+    
+    final days = getDaysInPeriod(period);
+    
+    final List<Map<String, dynamic>> analytics = [];
+    for (var entry in categoryMap.entries) {
+      analytics.add({
+        'category': entry.key,
+        'total': entry.value,
+        'daily_average': entry.value / days,
+        'percentage': totalExpense > 0 ? (entry.value / totalExpense) * 100 : 0.0,
+      });
+    }
+    
+    analytics.sort((a, b) => (b['total'] as double).compareTo(a['total'] as double));
+    return analytics;
+  }
+
+  Map<int, Map<String, double>> getPeriodicIncomeAndExpense(String period) {
+    final txs = getTransactionsForPeriod(period).where((tx) => tx.category != 'Transfer');
+    final Map<int, Map<String, double>> periodicData = {};
+    
+    for (var tx in txs) {
+      int key;
+      if (_currentFilter == FilterPeriod.year) {
+        key = tx.timestamp.month;
+      } else if (_currentFilter == FilterPeriod.week) {
+        key = tx.timestamp.weekday;
+      } else {
+        key = tx.timestamp.day;
+      }
+      
+      periodicData.putIfAbsent(key, () => {'income': 0.0, 'expense': 0.0});
+      if (tx.isExpense) {
+        periodicData[key]!['expense'] = periodicData[key]!['expense']! + tx.amount;
+      } else {
+        periodicData[key]!['income'] = periodicData[key]!['income']! + tx.amount;
+      }
+    }
+    return periodicData;
+  }
 }
